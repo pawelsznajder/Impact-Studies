@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
 
     int i,j,k,l,m;
 
-//    int Q2BinNumber = 13;
-//    int xBjBinNumber = 20;
+    //int Q2BinNumber = 13;
+    //int xBjBinNumber = 20;
 
     int Q2BinNumber = sizeof(Q2Bins)/sizeof(Q2Bins[0]);
     int xBjBinNumber = sizeof(xBjBins)/sizeof(xBjBins[0]);
@@ -38,9 +38,9 @@ int main(int argc, char **argv) {
 
     std::vector<TH1D*> h_t(300, nullptr);
 
-
     for(k=0;k<300; k++) {
-        h_t[k] = new TH1D("h_t_00" + k, "", 10, 0.2, 1.3);
+        h_t[k] = new TH1D(TString::Format("h_t_%d", k), "", 10, 0.2, 1.3);
+        h_t[k]-> Sumw2();
     }
 
 
@@ -62,15 +62,14 @@ int main(int argc, char **argv) {
                 //DVCS event
                 DVCSEvent dvcsEvent(evt, 1);
 
-
-
                 //fill
                 for(i=0; i<(Q2BinNumber-1); i++) {
                     for(j=0; j<(xBjBinNumber-1); j++){
 
-                        if(Q2Bins[i] < dvcsEvent.getQ2() < Q2Bins[i+1]) {
-                            if(xBjBins[j] < dvcsEvent.getXb() < xBjBins[j+1]) {
+                        if((Q2Bins[i] < dvcsEvent.getQ2()) && (dvcsEvent.getQ2() < Q2Bins[i+1])) {
+                            if((xBjBins[j] < dvcsEvent.getXb()) && (dvcsEvent.getXb() < xBjBins[j+1])) {
                                 h_t[i*(xBjBinNumber-1)+j]->Fill(-1. * dvcsEvent.getT());
+
                             }
                         }
                     }
@@ -106,9 +105,10 @@ int main(int argc, char **argv) {
             for(i=0; i<(Q2BinNumber-1); i++) {
                 for(j=0; j<(xBjBinNumber-1); j++){
 
-                    if(Q2Bins[i] < dvcsEvent.getQ2() < Q2Bins[i+1]) {
-                        if(xBjBins[j] < dvcsEvent.getXb() < xBjBins[j+1]) {
+                    if((Q2Bins[i] < dvcsEvent.getQ2()) && (dvcsEvent.getQ2() < Q2Bins[i+1])) {
+                        if((xBjBins[j] < dvcsEvent.getXb()) && (dvcsEvent.getXb() < xBjBins[j+1])) {
                             h_t[i*(xBjBinNumber-1)+j]->Fill(-1. * dvcsEvent.getT());
+
                         }
                     }
                 }
@@ -122,20 +122,29 @@ int main(int argc, char **argv) {
         inputFile.close();
     }
 
-    TCanvas* can_all = new TCanvas("can_all");
-    can_all->Divide(19, 12);
+    double limunosity =  0.0;
 
-    for(k=1;k<=(Q2BinNumber-1)*(xBjBinNumber-1); k++) {
-        can_all->cd(k);
-        can_all->cd(k)->SetLogy();
-        h_t[k-1]->SetMinimum(1);
-        h_t[k-1]->Draw("E");
-        h_t[k-1]->GetXaxis()->SetTitle("|t| (GeV^{2})");
-        h_t[k-1]->GetYaxis()->SetTitle("Number of events");
-        h_t[k-1]->GetYaxis()->CenterTitle(true);
+
+    for(k=1;k<=(Q2BinNumber-1); k++){
+
+        TCanvas* can_all = new TCanvas("can_all");
+        can_all->Divide(5, 4);
+
+        for(l=1;l<=(xBjBinNumber-1); l++) {
+
+            can_all->cd(l);
+            can_all->cd(l)->SetLogy();
+            h_t[(k-1) * (xBjBinNumber-1) + l-1]->SetMinimum(1);
+            h_t[(k-1) * (xBjBinNumber-1) + l-1]->Draw("E");
+            h_t[(k-1) * (xBjBinNumber-1) + l-1]->GetXaxis()->SetTitle("|t| (GeV^{2})");
+            h_t[(k-1) * (xBjBinNumber-1) + l-1]->GetYaxis()->SetTitle("Number of events");
+            h_t[(k-1) * (xBjBinNumber-1) + l-1]->GetYaxis()->CenterTitle(true);
+
+        }
+
+        can_all->Print(TString::Format("plots/plots_all_%d.pdf", k), "pdf");
+
     }
-
-    can_all->Print("plots_all.pdf", "pdf");
 
     //return
     return 0;
