@@ -4,6 +4,10 @@ cd build
 cmake ..
 make
 
+To pick up specific HepMC3 library use this in cmake:
+
+-DHepMC3_DIR=ABSOLUTE_PATH
+
 To run:
 
 cd bin
