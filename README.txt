@@ -11,4 +11,4 @@ To pick up specific HepMC3 library use this in cmake:
 To run:
 
 cd bin
-./eic_impact_studies
+./eic_impact_studies directory(ies)_with_EpIC_output_files
