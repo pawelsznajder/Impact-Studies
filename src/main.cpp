@@ -20,8 +20,15 @@ int main(int argc, char* argv[]){
 	//loop over directories
 	for(size_t i = 1; i < argc; i++){
 
+		//check if exists
+		if(! std::filesystem::exists(std::filesystem::path(argv[i]))){
+			
+			std::cout << __func__ << " warning: directory: " << argv[i] << " does not exist" << std::endl;
+			continue;
+		}
+
 		//loop over files
-		for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(argv[1])){
+		for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(argv[i])){
 
 			//skip directories
 			if(! dirEntry.is_regular_file()) continue;

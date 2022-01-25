@@ -1,6 +1,7 @@
 #include "../../include/bin/BinALU.h"
 
 #include <iostream>
+#include <sstream>
 
 #include "../../include/other/HashManager.h"
 
@@ -17,12 +18,18 @@ BinALU::BinALU(
 	m_rangeQ2 = checkRange(rangeQ2);
 	m_rangeT = checkRange(rangeT);
 	m_rangePhi = checkRange(rangePhi);
+
+	//labes
+	std::stringstream ss;
+
+	ss << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
  
 	//make histograms
 	m_hDistributions = std::make_pair(
-		new TH1D((HashManager::getInstance()->getHash()).c_str(), "", 
+		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
 			nPhiBins, rangePhi.first, rangePhi.second), 
-		new TH1D((HashManager::getInstance()->getHash()).c_str(), "", 
+		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
 			nPhiBins, rangePhi.first, rangePhi.second)
 	);
 

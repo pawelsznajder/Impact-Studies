@@ -54,10 +54,10 @@ void AnalysisALU::plot(const std::string& path){
 	for(std::vector<std::pair<double, double> >::const_iterator itT = m_binRangesT.begin(); 
 		itT != m_binRangesT.end(); itT++){
 
-		//label
+		//labes
 		std::stringstream ss;
 
-		ss << itT->first << " #leq t < " << itT->second;
+		ss << itT->first << " #leq |t| < " << itT->second;
 
 		//loop over canvases for this t bin
 		for(size_t i = 0; i < 2; i++){
@@ -83,6 +83,8 @@ void AnalysisALU::plot(const std::string& path){
 					//look for bin
 					for(itBin = m_bins.begin(); itBin != m_bins.end(); itBin++){
 						if(
+							itBin->getRangeT().first == itT->first && 
+							itBin->getRangeT().second == itT->second && 
 							itBin->getRangeXB().first == itXB->first && 
 							itBin->getRangeXB().second == itXB->second && 
 							itBin->getRangeQ2().first == itQ2->first && 
@@ -99,8 +101,8 @@ void AnalysisALU::plot(const std::string& path){
 
 					//set pad
 					cans[i].back()->cd(1 + 
-						size_t(itXB - m_binRangesXB.begin()) * m_binRangesQ2.size() + 
-						size_t(itQ2 - m_binRangesQ2.begin())
+						size_t(itXB - m_binRangesXB.begin()) + 
+						(size_t(m_binRangesQ2.end() - itQ2) - 1) * m_binRangesXB.size() 
 					);
 
 					if(i == 0){
@@ -167,7 +169,7 @@ void AnalysisALU::setBinBoundaries(){
     };
 
     m_binBoundsQ2 = {
-    	1.0, 1.77828, 3.16228, 5.62341, 
+	   	1.0, 1.77828, 3.16228, 5.62341, 
     	10.0, 17.7828, 31.6228, 56.2341, 
     	100.0, 177.828, 316.228, 562.341, 
     	1000.0
