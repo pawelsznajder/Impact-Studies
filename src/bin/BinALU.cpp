@@ -13,6 +13,9 @@ BinALU::BinALU(
 	const std::pair<double, double>& rangePhi
 ) : Bin("BinALU") {
 
+	//reset
+	reset();
+
 	//set ranges
 	m_rangeXB = checkRange(rangeXB);
 	m_rangeQ2 = checkRange(rangeQ2);
@@ -36,6 +39,9 @@ BinALU::BinALU(
 	//set sumw2
 	m_hDistributions.first->Sumw2();
 	m_hDistributions.second->Sumw2();
+
+	//function for fitting
+	m_fFit = new TF1((HashManager::getInstance()->getHash()).c_str(), "[0]*sin(x)", 0., 2 * M_PI);
 }
 
 BinALU::~BinALU(){
@@ -94,14 +100,52 @@ void BinALU::fill(const DVCSEvent& event, double weight){
 	m_sumPhi += weight * event.getPhi();
 }
 
-std::pair<double, double> BinALU::analyse(){
+FitResult BinALU::analyse(){
 	
 	//run for parent class
 	Bin::analyse();
 
+	//skip bins with low entry
+	if(m_nEvents < 100){
+		return FitResult();
+	}
+
 	//make asymmetry histogram
 	m_hAsymmetry = 
 		m_hDistributions.first->GetAsymmetry(m_hDistributions.second);
+
+	//fit
+	//fit options: 
+	//				0: do not attempt to draw function
+	int statusCode = int(m_hAsymmetry->Fit(m_fFit, "0"));
+
+	//store results
+	FitResult result;
+
+	result.setStatusCode(statusCode);
+	result.setNPoints(m_fFit->GetNumberFitPoints());
+	result.setChi2(m_fFit->GetChisquare());
+
+	for(size_t i = 0; i < m_fFit->GetNpar(); i++){
+		result.addParameter(std::make_pair(m_fFit->GetParameter(i), m_fFit->GetParError(i)));
+	}
+
+	//return
+	return result;
+}
+
+void BinALU::print() const{
+
+	//run for parent class
+	Bin::print();
+
+	//print
+	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+		"range xB: min: " << m_rangeXB.first << " max: " << m_rangeXB.second << " mean (from events): " << getMeanXB() << std::endl;
+	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+		"range Q2: min: " << m_rangeQ2.first << " max: " << m_rangeQ2.second << " mean (from events): " << getMeanQ2() << std::endl;
+	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+		"range |t|: min: " << m_rangeT.first << " max: " << m_rangeT.second << " mean (from events): " << getMeanT() << std::endl;
 }
 
 const std::pair<double, double>& BinALU::getRangeXB() const{

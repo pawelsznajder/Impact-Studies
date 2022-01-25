@@ -41,7 +41,16 @@ void AnalysisALU::analyse(){
 	//loop
 	for(std::vector<BinALU>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
-		it->analyse();
+
+		//make analysis
+		FitResult fitResult = it->analyse();
+
+		//print if only something happend 
+		if(fitResult.getStatusCode() != -10){
+
+			it->print();
+			fitResult.print();
+		}
 	}
 }
 
@@ -110,34 +119,52 @@ void AnalysisALU::plot(const std::string& path){
 
 					if(i == 0){
 
+						//histograms
+						TH1* h1 = itBin->getHDistributions().first;
+						TH1* h2 = itBin->getHDistributions().second;
+
 						//set minima
-						itBin->getHDistributions().first->SetMinimum(0.);
-						itBin->getHDistributions().second->SetMinimum(0.);
+						h1->SetMinimum(0.);
+						h2->SetMinimum(0.);
 
 						//colors
-						itBin->getHDistributions().first->SetLineColor(2);
-						itBin->getHDistributions().second->SetLineColor(4);
+						h1->SetLineColor(2);
+						h2->SetLineColor(4);
 
 						//no stats
-						itBin->getHDistributions().first->SetStats(0);
-						itBin->getHDistributions().second->SetStats(0);
+						h1->SetStats(0);
+						h2->SetStats(0);
 
 						//draw
-						itBin->getHDistributions().first->Draw();
-						itBin->getHDistributions().second->Draw("same");
+						h1->Draw();
+						h2->Draw("same");
 					}
 
 					 if(i == 1){
 
-					 	//set minimum and maximum
-					 	itBin->getHAsymmetry()->SetMinimum(-1.);
-					 	itBin->getHAsymmetry()->SetMaximum(1.);
+					 	//histogram
+					 	TH1* h = itBin->getHAsymmetry();
 
-					 	//no stats
-					 	itBin->getHAsymmetry()->SetStats(0);
+					 	//check if not empty
+					 	if(h != nullptr){
 
-					 	//draw
-					 	itBin->getHAsymmetry()->Draw();
+						 	//set minimum and maximum
+						 	h->SetMinimum(-1.);
+						 	h->SetMaximum(1.);
+
+						 	//no stats
+						 	h->SetStats(0);
+
+						 	//draw
+						 	h->Draw();
+
+						 	//draw associated function
+						 	TObject* o = h->GetListOfFunctions()->First();
+
+						 	if(o != 0){
+						 		static_cast<TF1*>(o)->Draw("same");
+						 	}
+					 	}
 					 }
 				}
 			}

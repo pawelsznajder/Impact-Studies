@@ -2,6 +2,7 @@
 #define BINALU_H
 
 #include <TH1.h>
+#include <TF1.h>
 #include <utility>
 
 #include "../../include/bin/Bin.h"
@@ -31,9 +32,11 @@ public:
 	//store
 	virtual void fill(const DVCSEvent& event, double weight);
 
-	//analyse (make fit)
-	//return histogram and result and uncertainty pair
-	virtual std::pair<double, double> analyse();
+	//print
+	virtual void print() const;
+
+	//analyse
+	virtual FitResult analyse();
 
 	//get range xB
 	const std::pair<double, double>& getRangeXB() const;
@@ -79,6 +82,7 @@ private:
 
 	std::pair<TH1*, TH1*> m_hDistributions;	//histograms to store events
 	TH1* m_hAsymmetry;						//histogram for resulting asymmetry
+	TF1* m_fFit;							//function for fitting 
 };
 
 #endif

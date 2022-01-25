@@ -11,7 +11,6 @@ Bin::~Bin(){
 }
 
 void Bin::reset(){
-
 	m_nEvents = 0;
 }
 
@@ -28,23 +27,24 @@ void Bin::fill(const DVCSEvent& event, double weight){
 	m_sumWeights += weight;
 }
 
-std::pair<double, double> Bin::analyse(){
+FitResult Bin::analyse(){
 	
 	//return 
-	return std::make_pair(0., 0.);
+	return FitResult();
 }
 
-double Bin::getMean(double sum, size_t nEvents) const{
+double Bin::getMean(double sum, double sumOfWeights) const{
 
 	//check if zero
-	if(nEvents == 0){
+	if(sumOfWeights == 0.){
 
-		std::cout << getClassName() << "::" << __func__ << " error: " << "number of events is zero" << std::endl;
+		std::cout << getClassName() << "::" << __func__ << " error: " << "sum of weight is zero or negative, "
+			<< sumOfWeights << std::endl;
 		exit(0);
 	}
 
 	//return
-	return sum / double(nEvents);
+	return sum / sumOfWeights;
 }
 
 std::pair<double, double> Bin::checkRange(const std::pair<double, double>& range) const{
@@ -53,7 +53,7 @@ std::pair<double, double> Bin::checkRange(const std::pair<double, double>& range
 	if(range.first == range.second){
 
 		std::cout << getClassName() << "::" << __func__ << " error: " << "invalid range, (" <<
-		range.first << ", " << range.second << ")" << std::endl;
+			range.first << ", " << range.second << ")" << std::endl;
 		exit(0);
 
 		return std::make_pair(0., 0.);
@@ -63,12 +63,17 @@ std::pair<double, double> Bin::checkRange(const std::pair<double, double>& range
 	if(range.first > range.second){
 
 		std::cout << getClassName() << "::" << __func__ << " warning: " << "inverted range, (" <<
-		range.first << ", " << range.second << "), has been corrected" << std::endl;
+			range.first << ", " << range.second << "), has been corrected" << std::endl;
 
 		return std::make_pair(range.second, range.first);
 	}
 
 	return range;
+}
+
+void Bin::print() const{
+	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+		"number of events: " << m_nEvents << std::endl;
 }
 
 size_t Bin::getNEvents() const{
