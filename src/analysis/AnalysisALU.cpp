@@ -175,7 +175,7 @@ void AnalysisALU::plot(const std::string& path){
 	for(size_t j = 0; j < cans[0].size(); j++){
 		for(size_t i = 0; i < 2; i++){
 
-			if(i == 0 && j == 0){
+			if(cans[0].size() > 1 && i == 0 && j == 0){
 				cans[i][j]->Print((path+"(").c_str(), "pdf");
 			}
 			else if(i == 1 && j == cans[0].size() - 1){

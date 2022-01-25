@@ -6,7 +6,7 @@
 #include "../../include/other/BaseObject.h"
 
 /*
- * Class storing result of a single fit.
+ * Container storing result of a single fit.
  */
 class FitResult : public BaseObject{
 

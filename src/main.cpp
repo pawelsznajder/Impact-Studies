@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include "HepMC3/ReaderAscii.h"
 
+#include "../include/analysis/AnalysisGeneral.h"
 #include "../include/analysis/AnalysisALU.h"
 
 int main(int argc, char* argv[]){
@@ -15,6 +16,7 @@ int main(int argc, char* argv[]){
 	}
 
 	//analysis objects
+	AnalysisGeneral analysisGeneral;
 	AnalysisALU analysisALU;
 
 	//loop over directories
@@ -100,6 +102,7 @@ int main(int argc, char* argv[]){
 
 	               	 	//fill
 	               	 	//TODO add weight 
+	               	 	analysisGeneral.fill(dvcsEvent, 1.);
 	               	 	analysisALU.fill(dvcsEvent, 1.);
 					}
 
@@ -111,10 +114,12 @@ int main(int argc, char* argv[]){
 	}
    
 	//analyse
+	analysisGeneral.analyse();
 	analysisALU.analyse();
 
 	//print
-	analysisALU.plot("test.pdf");
+	analysisGeneral.plot("analysisGeneral.pdf");
+	analysisALU.plot("analysisALU.pdf");
 
 	return 0;
 }
