@@ -86,6 +86,12 @@ void BinALU::fill(const DVCSEvent& event, double weight){
 			"wrong polarisation, " << event.getBeamPolarisation() << std::endl;
 		exit(0);
 	}
+
+	//add
+	m_sumXB += weight * event.getXB();
+	m_sumQ2 += weight * event.getQ2();
+	m_sumT += weight * event.getT();
+	m_sumPhi += weight * event.getPhi();
 }
 
 std::pair<double, double> BinALU::analyse(){
@@ -110,16 +116,24 @@ const std::pair<double, double>& BinALU::getRangeT() const{
 	return m_rangeT;
 }
 
+const std::pair<double, double>& BinALU::getRangePhi() const{
+	return m_rangePhi;
+}
+
 double BinALU::getMeanXB() const{
-	return getMean(m_sumXB, m_nEvents);
+	return getMean(m_sumXB, m_sumWeights);
 }
 
 double BinALU::getMeanQ2() const{
-	return getMean(m_sumQ2, m_nEvents);
+	return getMean(m_sumQ2, m_sumWeights);
 }
 
 double BinALU::getMeanT() const{
-	return getMean(m_sumT, m_nEvents);
+	return getMean(m_sumT, m_sumWeights);
+}
+
+double BinALU::getMeanPhi() const{
+	return getMean(m_sumPhi, m_sumWeights);
 }
 
 const std::pair<TH1*, TH1*>& BinALU::getHDistributions() const{
@@ -127,13 +141,5 @@ const std::pair<TH1*, TH1*>& BinALU::getHDistributions() const{
 }
 
 TH1* BinALU::getHAsymmetry() const{
-
-	if(! m_isLocked){
-
-		std::cout << getClassName() << "::" << __func__ << " error: " << 
-			"no analysis made so far for this bin" << std::endl;
-		exit(0);
-	}
-
 	return m_hAsymmetry;
 }

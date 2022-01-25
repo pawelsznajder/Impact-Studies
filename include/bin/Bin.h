@@ -29,6 +29,12 @@ public:
 	//return histogram and result and uncertainty pair
 	virtual std::pair<double, double> analyse();
 
+	//get number of stored events
+	size_t getNEvents() const;
+
+	//get sum of weights
+	double getSumWeights() const;
+
 protected:
 
 	//get mean
@@ -37,8 +43,8 @@ protected:
 	//check range
 	std::pair<double, double> checkRange(const std::pair<double, double>& range) const;
 
-	size_t m_nEvents;	//number of stored events
-	bool m_isLocked;	//true if locked after making fit
+	size_t m_nEvents;		//number of stored events
+	double m_sumWeights;	//sum of weights
 };
 
 #endif

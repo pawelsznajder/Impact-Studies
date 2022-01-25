@@ -44,6 +44,9 @@ public:
 	//get range T
 	const std::pair<double, double>& getRangeT() const;
 
+	//get range phi
+	const std::pair<double, double>& getRangePhi() const;
+
 	//get mean xB
 	double getMeanXB() const;
 
@@ -52,6 +55,9 @@ public:
 
 	//get mean t
 	double getMeanT() const;
+
+	//get mean phi
+	double getMeanPhi() const;
 
 	//get histograms to store events
 	const std::pair<TH1*, TH1*>& getHDistributions() const;
@@ -66,9 +72,10 @@ private:
 	std::pair<double, double> m_rangeT;		//t range
 	std::pair<double, double> m_rangePhi;	//phi range
 
-	double m_sumXB;	//sum of xB values.
-	double m_sumQ2;	//sum of Q2 values.
-	double m_sumT;	//sum of t values.
+	double m_sumXB;		//sum of xB values.
+	double m_sumQ2;		//sum of Q2 values.
+	double m_sumT;		//sum of t values.
+	double m_sumPhi;	//sum of phi values.
 
 	std::pair<TH1*, TH1*> m_hDistributions;	//histograms to store events
 	TH1* m_hAsymmetry;						//histogram for resulting asymmetry

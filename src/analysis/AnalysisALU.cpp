@@ -99,6 +99,9 @@ void AnalysisALU::plot(const std::string& path){
 						exit(0);
 					}
 
+					//check if not empty
+					if(itBin->getNEvents() == 0) continue;
+
 					//set pad
 					cans[i].back()->cd(1 + 
 						size_t(itXB - m_binRangesXB.begin()) + 

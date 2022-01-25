@@ -13,7 +13,6 @@ Bin::~Bin(){
 void Bin::reset(){
 
 	m_nEvents = 0;
-	m_isLocked = false;
 }
 
 void Bin::fill(const DVCSEvent& event, double weight){
@@ -24,19 +23,12 @@ void Bin::fill(const DVCSEvent& event, double weight){
 			<< "event weight is negative, " << weight << std::endl;
 	}
 
-	//check if locked
-	if(m_isLocked){
-
-		std::cout << getClassName() << "::" << __func__ << " error: " 
-			<< "bin was previously locked by fit() method" << std::endl;
-		exit(0);
-	}
+	//add
+	m_nEvents++;
+	m_sumWeights += weight;
 }
 
 std::pair<double, double> Bin::analyse(){
-
-	//mark as locked	
-	m_isLocked = true;
 	
 	//return 
 	return std::make_pair(0., 0.);
@@ -77,4 +69,12 @@ std::pair<double, double> Bin::checkRange(const std::pair<double, double>& range
 	}
 
 	return range;
+}
+
+size_t Bin::getNEvents() const{
+	return m_nEvents;
+}
+
+double Bin::getSumWeights() const{
+	return m_sumWeights;
 }
