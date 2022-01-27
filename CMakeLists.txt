@@ -13,7 +13,7 @@ add_compile_options()
 # add linking options
 if (UNIX)
 	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-		add_link_options(-lstdc++fs)
+		set(UNIX_LIBRARIES stdc++fs)
 	endif()
 endif ()
 
@@ -36,4 +36,4 @@ file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_executable(eic_impact_studies "${SOURCES}")
 set_target_properties(eic_impact_studies PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
-target_link_libraries(eic_impact_studies "${ROOT_LIBRARIES}" "${HEPMC3_LIBRARIES}")
+target_link_libraries(eic_impact_studies "${ROOT_LIBRARIES}" "${HEPMC3_LIBRARIES}" "${UNIX_LIBRARIES}")
