@@ -10,6 +10,13 @@ set(CMAKE_CXX_STANDARD 17)
 # add compilator options
 add_compile_options()
 
+# add linking options
+if (UNIX)
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+		add_link_options(-lstdc++fs)
+	endif()
+endif ()
+
 # additional modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
