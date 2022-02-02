@@ -39,6 +39,15 @@ public:
 
         //get phiS
         double getPhiS() const;
+        
+	//get pseudo-rapidity of outgoing electron
+        double getEtaEOut() const;
+
+	//get pseudo-rapidity of outgoing proton
+        double getEtaPOut() const;
+
+	//get pseudo-rapidity of outgoing photon
+        double getEtaGOut() const;
 
         //get beam polarisation
         int getBeamPolarisation() const;
@@ -104,6 +113,9 @@ private:
         double m_y;
         double m_phi;
         double m_phiS;
+        double m_etaeOut;
+        double m_etapOut;
+        double m_etagOut;
 
         //beam polarisation
         int m_beamPolarisation;
