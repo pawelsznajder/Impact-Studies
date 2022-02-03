@@ -24,6 +24,9 @@ DVCSEvent::DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
         m_t = (m_pOut - m_pIn).Mag2();
         m_phi = getPhiPhiS(0, m_gammaStar, m_pIn, m_eIn, m_eOut, m_gammaOut);  
         m_phiS = getPhiPhiS(1, m_gammaStar, m_pIn, m_eIn, m_eOut, m_gammaOut);
+	m_etaeOut = m_eOut.Eta();
+	m_etapOut = m_pOut.Eta();
+	m_etagOut = m_gammaOut.Eta();
 
         //beam polarisation
         m_beamPolarisation = beamPolarisation;
@@ -186,6 +189,18 @@ double DVCSEvent::getPhi() const{
 
 double DVCSEvent::getPhiS() const{
         return m_phiS;
+}
+
+double DVCSEvent::getEtaEOut() const{
+        return m_etaeOut;
+}
+
+double DVCSEvent::getEtaPOut() const{
+        return m_etapOut;
+}
+
+double DVCSEvent::getEtaGOut() const{
+        return m_etagOut;
 }
 
 const TLorentzVector& DVCSEvent::getEIn() const{

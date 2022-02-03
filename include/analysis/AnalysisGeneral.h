@@ -2,6 +2,7 @@
 #define ANALYSIS_GENERAL_H
 
 #include <TH2.h>
+#include <TH1.h>
 
 #include "../include/analysis/Analysis.h"
 #include "../include/event/DVCSEvent.h"
@@ -32,5 +33,16 @@ private:
 
 	//examplary histogram
 	TH2* m_hXBvsQ2;
+
+	// 1D histogram
+	TH1* m_hXB;
+	TH1* m_hQ2;
+	TH1* m_hT;
+	TH1* m_hPhi;
+	TH1* m_hPhiS;
+	TH1* m_hY;
+	TH1* m_hEtaEOut;
+	TH1* m_hEtaPOut;
+	TH1* m_hEtaGOut;
 };
 #endif
