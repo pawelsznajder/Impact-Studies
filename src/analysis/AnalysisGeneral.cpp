@@ -30,7 +30,7 @@ AnalysisGeneral::AnalysisGeneral() : Analysis("AnalysisGeneral"){
 AnalysisGeneral::~AnalysisGeneral(){
 }
 
-void AnalysisGeneral::fill(const DVCSEvent& event, double weight){
+void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 
 	//fill 2D histograms
 	m_hXBvsQ2->Fill(log10(event.getXB()), log10(event.getQ2()), weight);

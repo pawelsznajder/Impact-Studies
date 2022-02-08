@@ -70,7 +70,7 @@ void BinALU::reset(){
 	m_hAsymmetry = nullptr;
 }
 
-void BinALU::fill(const DVCSEvent& event, double weight){
+void BinALU::fill(DVCSEvent& event, double weight){
 
 	//run for parent class
 	Bin::fill(event, weight);

@@ -5,6 +5,7 @@
 #include <TLorentzVector.h>
 
 #include "../../include/other/BaseObject.h"
+#include "../../include/other/RCType.h"
 
 using namespace HepMC3;
 
@@ -23,31 +24,31 @@ public:
         virtual ~DVCSEvent();
 
         //get xB
-        double getXB() const;
+        double getXB(int rc = (RCType::ISR | RCType::FSR));
 
         //get t
-        double getT() const;
+        double getT(int rc = (RCType::ISR | RCType::FSR));
 
         //get Q2
-        double getQ2() const;
+        double getQ2(int rc = (RCType::ISR | RCType::FSR));
 
         //get y
-        double getY() const;
+        double getY(int rc = (RCType::ISR | RCType::FSR));
 
         //get phi
-        double getPhi() const;
+        double getPhi(int rc = (RCType::ISR | RCType::FSR));
 
         //get phiS
-        double getPhiS() const;
+        double getPhiS(int rc = (RCType::ISR | RCType::FSR));
         
 	//get pseudo-rapidity of outgoing electron
-        double getEtaEOut() const;
+        double getEtaEOut(int rc = (RCType::ISR | RCType::FSR));
 
 	//get pseudo-rapidity of outgoing proton
-        double getEtaPOut() const;
+        double getEtaPOut(int rc = (RCType::ISR | RCType::FSR));
 
 	//get pseudo-rapidity of outgoing photon
-        double getEtaGOut() const;
+        double getEtaGOut(int rc = (RCType::ISR | RCType::FSR));
 
         //get beam polarisation
         int getBeamPolarisation() const;
@@ -58,23 +59,8 @@ public:
         //get target polarisation
         TVector3 getTargetPolarisation() const;
 
-        //get four-momentum of beam electron
-        const TLorentzVector& getEIn() const;
-
-        //get four-momentum of outgoing electron
-        const TLorentzVector& getEOut() const;
-
-        //get four-momentum of virtual photon
-        const TLorentzVector& getGammaStar() const;
-
-        //get four-momentum of beam proton
-        const TLorentzVector& getPIn() const;
-
-        //get four-momentum of outgoing proton
-        const TLorentzVector& getPOut() const;
-
-        //get four-momentum of real (DVCS) photon
-        const TLorentzVector& getGammaOut() const;
+        //check if contains given type of radiation
+        bool checkIfRC(RCType::Type rcType) const;
 
 private:
 
@@ -83,39 +69,45 @@ private:
                 const TLorentzVector& p, const TLorentzVector& mu, 
                 const TLorentzVector& mup, const TLorentzVector& v) const;
 
+        //make TLorentzVector
+        TLorentzVector makeTLorentzVector(const ConstGenParticlePtr& constGenParticlePtr) const;
+
         //find four-momentum of beam electron in HepMC3 event 
-        TLorentzVector getEIn(const GenEvent& evt) const;
+        std::map<RCType::Type, TLorentzVector> getEIn(const GenEvent& evt) const;
 
         //find four-momentum of outgoing electron in HepMC3 event 
-        TLorentzVector getEOut(const GenEvent& evt) const;
+        std::map<RCType::Type, TLorentzVector> getEOut(const GenEvent& evt) const;
 
         //find four-momentum of beam proton in HepMC3 event 
-        TLorentzVector getPIn(const GenEvent& evt) const;
+        std::map<RCType::Type, TLorentzVector> getPIn(const GenEvent& evt) const;
 
         //find four-momentum of outgoing proton in HepMC3 event 
-        TLorentzVector getPOut(const GenEvent& evt) const;
+        std::map<RCType::Type, TLorentzVector> getPOut(const GenEvent& evt) const;
 
-        //find four-momentum of real (DVCS) photon in HepMC3 event 
-        TLorentzVector getGammaOut(const GenEvent& evt) const;
+        //find four-momentum of DVCS photon in HepMC3 event 
+        std::map<RCType::Type, TLorentzVector> getGammaOut(const GenEvent& evt) const;
 
         //four-momenta
-        TLorentzVector m_eIn;
-        TLorentzVector m_eOut;
-        TLorentzVector m_gammaStar;
-        TLorentzVector m_pIn;
-        TLorentzVector m_pOut;
-        TLorentzVector m_gammaOut;
+        std::map<RCType::Type, TLorentzVector> m_eIn;
+        std::map<RCType::Type, TLorentzVector> m_eOut;
+        std::map<RCType::Type, TLorentzVector> m_pIn;
+        std::map<RCType::Type, TLorentzVector> m_pOut;
+        std::map<RCType::Type, TLorentzVector> m_gammaOut;
 
-        //variables
-        double m_xB;
-        double m_t;
-        double m_Q2;
-        double m_y;
-        double m_phi;
-        double m_phiS;
-        double m_etaeOut;
-        double m_etapOut;
-        double m_etagOut;
+        //this flag is used to avoid loading four-momenta for each evaluation of kinematic variables
+        int m_this_rc;
+
+        //load four-momenta for evaluation of kinematic variables
+        void loadThisRC(int rc);
+
+        //four-momenta for evaluation of kinematic variables
+        TLorentzVector m_this_rc_eIn;
+        TLorentzVector m_this_rc_eOut;
+        TLorentzVector m_this_rc_pIn;
+        TLorentzVector m_this_rc_pOut;
+        TLorentzVector m_this_rc_gammaOut;
+
+        TLorentzVector m_this_rc_gammaStar;
 
         //beam polarisation
         int m_beamPolarisation;

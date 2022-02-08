@@ -12,21 +12,12 @@ DVCSEvent::DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
         //four-momenta
         m_eIn = getEIn(evt);
         m_eOut = getEOut(evt);
-        m_gammaStar = getEIn(evt) - getEOut(evt);
         m_pIn = getPIn(evt);
         m_pOut = getPOut(evt);
         m_gammaOut = getGammaOut(evt);
 
-        //variables
-        m_Q2 = -1 * m_gammaStar.Mag2();
-        m_xB = m_Q2 / (2 * m_pIn * m_gammaStar);
-        m_y = (m_pIn * m_gammaStar) / (m_pIn * m_eIn);
-        m_t = (m_pOut - m_pIn).Mag2();
-        m_phi = getPhiPhiS(0, m_gammaStar, m_pIn, m_eIn, m_eOut, m_gammaOut);  
-        m_phiS = getPhiPhiS(1, m_gammaStar, m_pIn, m_eIn, m_eOut, m_gammaOut);
-	m_etaeOut = m_eOut.Eta();
-	m_etapOut = m_pOut.Eta();
-	m_etagOut = m_gammaOut.Eta();
+        //rc flag
+        m_this_rc = -1;
 
         //beam polarisation
         m_beamPolarisation = beamPolarisation;
@@ -92,139 +83,279 @@ double DVCSEvent::getPhiPhiS(int mode, const TLorentzVector& q,
          return -1;
 }
 
-TLorentzVector DVCSEvent::getEIn(const GenEvent& evt) const{
 
-        const std::vector<ConstGenParticlePtr>& particles = evt.particles();
-
-        for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
-                if((*it)->status() == 4 && (*it)->pid() == 11)
-                        return TLorentzVector((*it)->momentum().px(), (*it)->momentum().py(), (*it)->momentum().pz(), (*it)->momentum().e());
-        }
-
-        std::cout << getClassName() << "::" << __func__ << 
-                ": error: no particle" << std::endl;
-        exit(0);
+TLorentzVector DVCSEvent::makeTLorentzVector(const ConstGenParticlePtr& particle) const{
+        return TLorentzVector(
+                particle->momentum().px(), 
+                particle->momentum().py(), 
+                particle->momentum().pz(), 
+                particle->momentum().e());
 }
 
-TLorentzVector DVCSEvent::getEOut(const GenEvent& evt) const{
+std::map<RCType::Type, TLorentzVector> DVCSEvent::getEIn(const GenEvent& evt) const{
 
+        //result
+        std::map<RCType::Type, TLorentzVector> result;
+
+        //reference and loop
         const std::vector<ConstGenParticlePtr>& particles = evt.particles();
 
         for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
-                if((*it)->status() == 1 && (*it)->pid() == 11 && (*it)->children().size() == 0)
-                        return TLorentzVector((*it)->momentum().px(), (*it)->momentum().py(), (*it)->momentum().pz(), (*it)->momentum().e());
+
+                //only electron
+                if((*it)->pid() != 11) continue;
+
+                //ISR (is marked as beam and ends in e -> e + gamma vertex) 
+                //TODO !!!
+                if((*it)->status() == 4 && (*it)->children().size() == 1){
+
+                        result.insert(std::make_pair(RCType::ISR, makeTLorentzVector(*it)));
+
+                        // bool hasE = false;
+                        // bool hasGamma = false;
+
+                        // //reference and loop
+                        // const std::vector<ConstGenParticlePtr>& particlesOut = (*it)->children();
+
+                        // for(std::vector<ConstGenParticlePtr>::const_iterator itOut = particlesOut.begin(); itOut != particlesOut.end(); itOut++){
+
+                        //         if((*itOut)->pid() == 11) hasE = true;
+                        //         if((*itOut)->status() == 1 && (*itOut)->pid() == 22) hasGamma = true;
+                        // } 
+
+                        // //save
+                        // if(hasE && hasGamma) result.insert(std::make_pair(RCType::ISR, makeTLorentzVector(*it)));
+                }
+
+                //Born (ends in e -> e + gamma* vertex) 
+                if((*it)->children().size() == 2){
+
+                        bool hasE = false;
+                        bool hasGammaStar = false;
+
+                        //reference and loop
+                        const std::vector<ConstGenParticlePtr>& particlesOut = (*it)->children();
+
+                        for(std::vector<ConstGenParticlePtr>::const_iterator itOut = particlesOut.begin(); itOut != particlesOut.end(); itOut++){
+
+                                if((*itOut)->pid() == 11) hasE = true;
+                                if((*itOut)->status() == 13 && (*itOut)->pid() == 22) hasGammaStar = true;
+                        }   
+
+                        //save
+                        if(hasE && hasGammaStar) result.insert(std::make_pair(RCType::Born, makeTLorentzVector(*it)));
+                }
         }
 
-        std::cout << getClassName() << "::" << __func__ << 
-                ": error: no particle" << std::endl;
-        exit(0);
+        return result;
 }
 
-TLorentzVector DVCSEvent::getPIn(const GenEvent& evt) const{
+std::map<RCType::Type, TLorentzVector> DVCSEvent::getEOut(const GenEvent& evt) const{
 
+        //result
+        std::map<RCType::Type, TLorentzVector> result;
+
+        //reference and loop
         const std::vector<ConstGenParticlePtr>& particles = evt.particles();
 
         for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
-                if((*it)->status() == 4 && (*it)->pid() == 2212)
-                        return TLorentzVector((*it)->momentum().px(), (*it)->momentum().py(), (*it)->momentum().pz(), (*it)->momentum().e());
-        }
 
-        std::cout << getClassName() << "::" << __func__ << 
-                ": error: no particle" << std::endl;
-        exit(0);
-}
+                //only electron
+                if((*it)->pid() != 11) continue;
 
-TLorentzVector DVCSEvent::getPOut(const GenEvent& evt) const{
+                //FSR (comes from e -> e + gamma vertex and does not end in any vertex) 
+                if((*it)->parents().size() == 1 && (*it)->children().size() == 0){
 
-        const std::vector<ConstGenParticlePtr>& particles = evt.particles();
+                        if((*it)->production_vertex()->particles_out_size() == 2){
 
-        for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
-                if((*it)->status() == 1 && (*it)->pid() == 2212)
-                        return TLorentzVector((*it)->momentum().px(), (*it)->momentum().py(), (*it)->momentum().pz(), (*it)->momentum().e());
-        }
+                                bool hasE = false;
+                                bool hasGamma = false;
 
-        std::cout << getClassName() << "::" << __func__ << 
-                ": error: no particle" << std::endl;
-        exit(0);
-}
+                                if((*it)->parents().at(0)->pid() == 11) hasE = true;
 
-TLorentzVector DVCSEvent::getGammaOut(const GenEvent& evt) const{
+                                //reference and loop
+                                const std::vector<ConstGenParticlePtr>& particlesOut = (*it)->production_vertex()->particles_out();
 
-        const std::vector<ConstGenParticlePtr>& particles = evt.particles();
+                                for(std::vector<ConstGenParticlePtr>::const_iterator itOut = particlesOut.begin(); itOut != particlesOut.end(); itOut++){
+                                        if((*itOut)->status() == 1 && (*itOut)->pid() == 22) hasGamma = true;
+                                }   
 
-        for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
-                if((*it)->status() == 1 && (*it)->pid() == 22) {
+                                //save
+                                if(hasE && hasGamma) result.insert(std::make_pair(RCType::FSR, makeTLorentzVector(*it)));
+                        }
+                }
 
-                        for(std::vector<ConstGenParticlePtr>::const_iterator itV = (*it)->production_vertex()->particles_in().begin(); itV != (*it)->production_vertex()->particles_in().end(); itV++){
-                                if((*itV)->status() == 4 && (*itV)->pid() == 2212)
-                                        return TLorentzVector((*it)->momentum().px(), (*it)->momentum().py(), (*it)->momentum().pz(), (*it)->momentum().e());
+                //Born (comes from e -> e + gamma* vertex) 
+                if((*it)->parents().size() == 1){
+
+                        if((*it)->production_vertex()->particles_out_size() == 2){
+
+                                bool hasE = false;
+                                bool hasGammaStar = false;
+
+                                if((*it)->parents().at(0)->pid() == 11) hasE = true;
+
+                                //reference and loop
+                                const std::vector<ConstGenParticlePtr>& particlesOut = (*it)->production_vertex()->particles_out();
+
+                                for(std::vector<ConstGenParticlePtr>::const_iterator itOut = particlesOut.begin(); itOut != particlesOut.end(); itOut++){
+                                        if((*itOut)->status() == 13 && (*itOut)->pid() == 22) hasGammaStar = true;
+                                }   
+
+                                //save
+                                if(hasE && hasGammaStar) result.insert(std::make_pair(RCType::Born, makeTLorentzVector(*it)));
                         }
                 }
         }
 
-        std::cout << getClassName() << "::" << __func__ << 
-                ": error: no particle" << std::endl;
-        exit(0);
+        return result;
 }
 
-double DVCSEvent::getXB() const{
-        return m_xB;
+std::map<RCType::Type, TLorentzVector> DVCSEvent::getPIn(const GenEvent& evt) const{
+
+        //result
+        std::map<RCType::Type, TLorentzVector> result;
+
+        //reference and loop
+        const std::vector<ConstGenParticlePtr>& particles = evt.particles();
+
+        for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
+
+                //only proton
+                if((*it)->pid() != 2212) continue;
+
+                //Born (is beam) 
+                if((*it)->status() == 4){
+
+                        //save
+                        result.insert(std::make_pair(RCType::Born, makeTLorentzVector(*it)));
+                }         
+        }
+
+        return result;
 }
 
-double DVCSEvent::getT() const{
-        return m_t;
+std::map<RCType::Type, TLorentzVector> DVCSEvent::getPOut(const GenEvent& evt) const{
+
+        //result
+        std::map<RCType::Type, TLorentzVector> result;
+
+        //reference and loop
+        const std::vector<ConstGenParticlePtr>& particles = evt.particles();
+
+        for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
+
+                //only proton
+                if((*it)->pid() != 2212) continue;
+
+                //Born (is not beam) 
+                if((*it)->status() == 1){
+
+                        //save
+                        result.insert(std::make_pair(RCType::Born, makeTLorentzVector(*it)));
+                }         
+        }
+
+        return result;
 }
 
-double DVCSEvent::getQ2() const{
-        return m_Q2;
+std::map<RCType::Type, TLorentzVector> DVCSEvent::getGammaOut(const GenEvent& evt) const{
+
+        //result
+        std::map<RCType::Type, TLorentzVector> result;
+
+        //reference and loop
+        const std::vector<ConstGenParticlePtr>& particles = evt.particles();
+
+        for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
+
+                //only proton
+                if((*it)->pid() != 22) continue;
+
+                //Born (comes from gamma* + p -> gamma + p vertex) 
+                if((*it)->parents().size() == 2){
+
+                        bool hasP = false;
+                        bool hasGammaStar = false;
+
+                        //reference and loop
+                        const std::vector<ConstGenParticlePtr>& particlesOut = (*it)->production_vertex()->particles_in();
+
+                        for(std::vector<ConstGenParticlePtr>::const_iterator itOut = particlesOut.begin(); itOut != particlesOut.end(); itOut++){
+                                
+                                if((*itOut)->pid() == 2212) hasP = true;
+                                if((*itOut)->status() == 13 && (*itOut)->pid() == 22) hasGammaStar = true;
+                        }   
+
+                        //save
+                        if(hasP && hasGammaStar) result.insert(std::make_pair(RCType::Born, makeTLorentzVector(*it)));     
+                }        
+        }
+
+        return result;
 }
 
-double DVCSEvent::getY() const{
-        return m_y;
+double DVCSEvent::getXB(int rc) {
+
+        loadThisRC(rc);
+
+        return -1 * m_this_rc_gammaStar.Mag2() / (2 * m_this_rc_pIn * m_this_rc_gammaStar);
 }
 
-double DVCSEvent::getPhi() const{
-        return m_phi;
+double DVCSEvent::getT(int rc) {
+
+        loadThisRC(rc);
+
+        return (m_this_rc_pOut - m_this_rc_pIn).Mag2();
 }
 
-double DVCSEvent::getPhiS() const{
-        return m_phiS;
+double DVCSEvent::getQ2(int rc) {
+
+        loadThisRC(rc);
+
+        return -1 * m_this_rc_gammaStar.Mag2();
 }
 
-double DVCSEvent::getEtaEOut() const{
-        return m_etaeOut;
+double DVCSEvent::getY(int rc) {
+
+        loadThisRC(rc);
+
+        return (m_this_rc_pIn * m_this_rc_gammaStar) / (m_this_rc_pIn * m_this_rc_eIn);
 }
 
-double DVCSEvent::getEtaPOut() const{
-        return m_etapOut;
+double DVCSEvent::getPhi(int rc) {
+
+        loadThisRC(rc);
+
+        return getPhiPhiS(0, m_this_rc_gammaStar, m_this_rc_pIn, m_this_rc_eIn, m_this_rc_eOut, m_this_rc_gammaOut);
 }
 
-double DVCSEvent::getEtaGOut() const{
-        return m_etagOut;
+double DVCSEvent::getPhiS(int rc) {
+
+        loadThisRC(rc);
+
+        return getPhiPhiS(1, m_this_rc_gammaStar, m_this_rc_pIn, m_this_rc_eIn, m_this_rc_eOut, m_this_rc_gammaOut);
 }
 
-const TLorentzVector& DVCSEvent::getEIn() const{
-        return m_eIn;
+double DVCSEvent::getEtaEOut(int rc) {
+
+        loadThisRC(rc);
+
+        return m_this_rc_eOut.Eta();
 }
 
-const TLorentzVector& DVCSEvent::getEOut() const{
-        return m_eOut;
+double DVCSEvent::getEtaPOut(int rc) {
+
+        loadThisRC(rc);
+
+        return m_this_rc_pOut.Eta();
 }
 
-const TLorentzVector& DVCSEvent::getGammaStar() const{
-        return m_gammaStar;
-}
+double DVCSEvent::getEtaGOut(int rc) {
 
-const TLorentzVector& DVCSEvent::getPIn() const{
-        return m_pIn;
-}
+        loadThisRC(rc);
 
-const TLorentzVector& DVCSEvent::getPOut() const{
-        return m_pOut;
-}
-
-const TLorentzVector& DVCSEvent::getGammaOut() const{
-        return m_gammaOut;
+        return m_this_rc_gammaOut.Eta();
 }
 
 int DVCSEvent::getBeamPolarisation() const{
@@ -238,3 +369,81 @@ int DVCSEvent::getBeamCharge() const{
 TVector3 DVCSEvent::getTargetPolarisation() const{
         return m_targetPolarisation;
 }
+
+void DVCSEvent::loadThisRC(int rc){
+
+        //check if the same
+        if(rc == m_this_rc) return;
+
+        //iterator
+        std::map<RCType::Type, TLorentzVector>::const_iterator it;
+
+        //eIn
+        it = m_eIn.end();
+
+        if(rc & RCType::ISR){
+                it = m_eIn.find(RCType::ISR);  
+        }
+
+        if(it == m_eIn.end()){
+                it = m_eIn.find(RCType::Born);
+        }
+
+        m_this_rc_eIn = it->second;
+
+        //eOut
+        it = m_eOut.end();
+
+        if(rc & RCType::FSR){
+                it = m_eOut.find(RCType::FSR);  
+        }
+
+        if(it == m_eOut.end()){
+                it = m_eOut.find(RCType::Born);
+        }
+
+        m_this_rc_eOut = it->second;
+
+        //pIn
+        it = m_pIn.find(RCType::Born);
+        
+        m_this_rc_pIn = it->second;
+
+        //pOut
+        it = m_pOut.find(RCType::Born);
+        
+        m_this_rc_pOut = it->second;
+
+        //gamma DVCS
+        it = m_gammaOut.find(RCType::Born);
+        
+        m_this_rc_gammaOut = it->second;
+
+        //gamma *
+        m_this_rc_gammaStar = m_this_rc_eIn - m_this_rc_eOut;
+
+        //save
+        m_this_rc = rc;
+}
+
+ bool DVCSEvent::checkIfRC(RCType::Type rcType) const{
+
+        if(rcType == RCType::ISR){
+                return m_eIn.find(RCType::ISR) == m_eIn.end();  
+        }   
+
+        if(rcType == RCType::FSR){
+                return m_eOut.find(RCType::FSR) == m_eOut.end();  
+        }   
+
+        std::cout << getClassName() << "::" << __func__ << " error: " << 
+                "wrong RC type, " << RCType(rcType).toString() << std::endl;
+        exit(0);
+
+        return false;
+ }
+
+        
+
+  
+

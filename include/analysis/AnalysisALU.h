@@ -19,7 +19,7 @@ public:
 	virtual ~AnalysisALU();
 
 	//fill with events
-	virtual void fill(const DVCSEvent& event, double weight);
+	virtual void fill(DVCSEvent& event, double weight);
 
 	//perform analysis
 	virtual void analyse();

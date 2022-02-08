@@ -14,7 +14,7 @@ void Bin::reset(){
 	m_nEvents = 0;
 }
 
-void Bin::fill(const DVCSEvent& event, double weight){
+void Bin::fill(DVCSEvent& event, double weight){
 
 	//check weight
 	if(weight < 0.){

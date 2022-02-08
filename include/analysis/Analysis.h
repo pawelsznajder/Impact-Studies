@@ -22,7 +22,7 @@ public:
 	}
 
 	//fill with events
-	virtual void fill(const DVCSEvent& event, double weight) = 0;
+	virtual void fill(DVCSEvent& event, double weight) = 0;
 
 	//perform analysis
 	virtual void analyse() = 0;
