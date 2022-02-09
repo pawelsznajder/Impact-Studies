@@ -24,7 +24,7 @@ public:
 	virtual void reset();
 
 	//store
-	virtual void fill(const DVCSEvent& event, double weight);
+	virtual void fill(DVCSEvent& event, double weight);
 
 	//print
 	virtual void print() const;

@@ -18,7 +18,7 @@ AnalysisALU::AnalysisALU() : Analysis("AnalysisALU"){
 AnalysisALU::~AnalysisALU(){
 }
 
-void AnalysisALU::fill(const DVCSEvent& event, double weight){
+void AnalysisALU::fill(DVCSEvent& event, double weight){
 
 	for(std::vector<BinALU>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
