@@ -1,25 +1,12 @@
 #include <cmath>
+#include <filesystem>
 #include <iostream>
 #include <cstdlib>
 #include <HepMC3/ReaderAscii.h>
 
-#ifdef __APPLE__
-    #include <filesystem>
-    namespace fs = std::filesystem;
-#endif
-
-#ifdef __linux__
-    #if __GNUC__ >= 9
-            #include <filesystem>
-            namespace fs = std::filesystem;
-    #else
-            #include <experimental/filesystem>
-            namespace fs = std::experimental::filesystem;
-    #endif
-#endif
-
 #include "../include/analysis/AnalysisGeneral.h"
 #include "../include/analysis/AnalysisALU.h"
+#include "../include/analysis/AnalysisTSlope.h"
 
 int main(int argc, char* argv[]){
 
@@ -32,22 +19,23 @@ int main(int argc, char* argv[]){
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
 	AnalysisALU analysisALU;
+	AnalysisTSlope analysisTSlope;
 
 	//loop over directories
 	for(size_t i = 1; i < argc; i++){
 
 		//check if exists
-		if(! fs::exists(fs::path(argv[i]))){
+		if(! std::filesystem::exists(std::filesystem::path(argv[i]))){
 			
 			std::cout << __func__ << " warning: directory: " << argv[i] << " does not exist" << std::endl;
 			continue;
 		}
 
 		//loop over files
-		for (const auto& dirEntry : fs::recursive_directory_iterator(argv[i])){
+		for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(argv[i])){
 
 			//skip directories
-			if(! fs::is_regular_file(dirEntry)) continue;
+			if(! dirEntry.is_regular_file()) continue;
 
 			//txt
 			if(dirEntry.path().extension() == ".txt"){
@@ -118,6 +106,7 @@ int main(int argc, char* argv[]){
 	               	 	//TODO add weight 
 	               	 	analysisGeneral.fill(dvcsEvent, 1.);
 	               	 	analysisALU.fill(dvcsEvent, 1.);
+				analysisTSlope.fill(dvcsEvent, 1.);
 					}
 
 					//close file
@@ -130,10 +119,12 @@ int main(int argc, char* argv[]){
 	//analyse
 	analysisGeneral.analyse();
 	analysisALU.analyse();
+	analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
 	analysisALU.plot("analysisALU.pdf");
+	analysisTSlope.plot("analysisTSlope.pdf");
 
 	return 0;
 }
