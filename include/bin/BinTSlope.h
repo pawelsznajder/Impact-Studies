@@ -29,7 +29,7 @@ public:
 	virtual void reset();
 
 	//store
-	virtual void fill(const DVCSEvent& event, double weight);
+	virtual void fill(DVCSEvent& event, double weight);
 
 	//print
 	virtual void print() const;
@@ -65,7 +65,7 @@ private:
 
 	std::pair<double, double> m_rangeXB;	//xB range
 	std::pair<double, double> m_rangeQ2;	//Q2 range
-	std::pair<double, double> m_rangeT;	//t range
+	std::pair<double, double> m_rangeT;		//t range
 
 	double m_sumXB;		//sum of xB values.
 	double m_sumQ2;		//sum of Q2 values.

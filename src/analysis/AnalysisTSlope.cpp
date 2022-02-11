@@ -19,7 +19,7 @@ AnalysisTSlope::AnalysisTSlope() : Analysis("AnalysisTSlope"){
 AnalysisTSlope::~AnalysisTSlope(){
 }
 
-void AnalysisTSlope::fill(const DVCSEvent& event, double weight){
+void AnalysisTSlope::fill(DVCSEvent& event, double weight){
 
 	for(std::vector<BinTSlope>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
@@ -29,7 +29,6 @@ void AnalysisTSlope::fill(const DVCSEvent& event, double weight){
 
 		if(event.getQ2() < it->getRangeQ2().first || 
 			event.getQ2() >= it->getRangeQ2().second) continue; 
-
 
 		it->fill(event, weight);
 	}
@@ -56,22 +55,20 @@ void AnalysisTSlope::analyse(){
 void AnalysisTSlope::plot(const std::string& path){
 
 	//canvases
-	std::vector<TCanvas*> cans[2];
+	TCanvas* cans[1];
 
 	//labes
 	std::stringstream ss;
 
 	//loop over canvases for this t bin
-	for(size_t i = 0; i < 2; i++){
+	for(size_t i = 0; i < 1; i++){
 
 		//new
-		cans[i].push_back(
-			new TCanvas(
-				(HashManager::getInstance()->getHash()).c_str(), ss.str().c_str())
-		);
+		cans[i] = new TCanvas(
+				(HashManager::getInstance()->getHash()).c_str(), ss.str().c_str());
 
 		//divide
-		cans[i].back()->Divide(m_binRangesXB.size(), m_binRangesQ2.size());
+		cans[i]->Divide(m_binRangesXB.size(), m_binRangesQ2.size());
 
 		//plot
 		for(std::vector<std::pair<double, double> >::const_iterator itXB = m_binRangesXB.begin(); 
@@ -103,35 +100,17 @@ void AnalysisTSlope::plot(const std::string& path){
 				if(itBin->getNEvents() == 0) continue;
 
 				//set pad
-				cans[i].back()->cd(1 + 
+				cans[i]->cd(1 + 
 					size_t(itXB - m_binRangesXB.begin()) + 
 					(size_t(m_binRangesQ2.end() - itQ2) - 1) * m_binRangesXB.size() 
 				);
 
 				//set log-scale
-				cans[i].back()->cd(1 + 
+				cans[i]->cd(1 + 
 					size_t(itXB - m_binRangesXB.begin()) + 
 					(size_t(m_binRangesQ2.end() - itQ2) - 1) * m_binRangesXB.size())->SetLogy();
 
 				if(i == 0){
-
-					//histograms
-					TH1* h = itBin->getHDistributions();
-
-					//set minima
-					h->SetMinimum(1);
-
-					//colors
-					h->SetLineColor(2);
-
-					//no stats
-					h->SetStats(0);
-
-					//draw
-					h->Draw();
-				}
-
-				if(i == 1){
 
 					//histogram
 				  	TH1* h = itBin->getHTSlope();
@@ -162,19 +141,17 @@ void AnalysisTSlope::plot(const std::string& path){
 	}
 
 	//print
-	for(size_t j = 0; j < cans[0].size(); j++){
-		for(size_t i = 0; i < 2; i++){
+	for(size_t i = 0; i < 1; i++){
 
-			if(cans[0].size() > 1 && i == 0 && j == 0){
-				cans[i][j]->Print((path+"(").c_str(), "pdf");
-			}
-			else if(i == 1 && j == cans[0].size() - 1){
-				cans[i][j]->Print((path+")").c_str(), "pdf");
-			}
-			else{
-				cans[i][j]->Print(path.c_str(), "pdf");
-			}
-		}
+		// if(i == 0){
+		// 	cans[i]->Print((path+"(").c_str(), "pdf");
+		// }
+		// else if(i == 100){
+		// 	cans[i]->Print((path+")").c_str(), "pdf");
+		// }
+		// else{
+			cans[i]->Print(path.c_str(), "pdf");
+		// }
 	}
 }
 
@@ -195,8 +172,7 @@ void AnalysisTSlope::setBinBoundaries(){
     	1000.0
     };
 
-    m_nBinsT = 11;
-
+    m_nBinsT = 20;
 }
 
 void AnalysisTSlope::initialiseBins(){
@@ -212,7 +188,6 @@ void AnalysisTSlope::initialiseBins(){
 		m_binRangesQ2.push_back(std::make_pair(*(itQ2 - 1), *itQ2));
 	}
 
-
 	//make bins
 	for(std::vector<std::pair<double, double> >::const_iterator itXB = m_binRangesXB.begin(); 
 			itXB != m_binRangesXB.end(); itXB++){
@@ -221,7 +196,7 @@ void AnalysisTSlope::initialiseBins(){
 			
 				m_bins.push_back(
 					BinTSlope(
-						*itXB, *itQ2, m_nBinsT, std::make_pair(-1.3, -0.2)
+						*itXB, *itQ2, m_nBinsT, std::make_pair(0., 2.)
 					)
 				);
 			

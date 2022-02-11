@@ -19,7 +19,7 @@ public:
 	virtual ~AnalysisTSlope();
 
 	//fill with events
-	virtual void fill(const DVCSEvent& event, double weight);
+	virtual void fill(DVCSEvent& event, double weight);
 
 	//perform analysis
 	virtual void analyse();
@@ -38,12 +38,10 @@ private:
 	//bin boundaries
 	std::vector<double> m_binBoundsXB;
 	std::vector<double> m_binBoundsQ2;
-	std::vector<double> m_binBoundsT;
 
 	//bin ranges
 	std::vector<std::pair<double, double> > m_binRangesXB;
 	std::vector<std::pair<double, double> > m_binRangesQ2;
-	std::vector<std::pair<double, double> > m_binRangesT;
 
 	//number of t bins
 	size_t m_nBinsT;

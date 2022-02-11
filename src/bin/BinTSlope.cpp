@@ -35,7 +35,7 @@ BinTSlope::BinTSlope(
 	m_hDistributions->Sumw2();
 
 	//function for fitting
-	m_fFit = new TF1((HashManager::getInstance()->getHash()).c_str(), "[0]*exp([1]*x)", -1.3, -0.2);
+	m_fFit = new TF1((HashManager::getInstance()->getHash()).c_str(), "[0]*exp(-1*[1]*x)", 0., 2.);
 }
 
 BinTSlope::~BinTSlope(){
@@ -64,28 +64,14 @@ void BinTSlope::reset(){
 	m_hTSlope = nullptr;
 }
 
-void BinTSlope::fill(const DVCSEvent& event, double weight){
+void BinTSlope::fill(DVCSEvent& event, double weight){
 
 	//run for parent class
 	Bin::fill(event, weight);
 
-	//pol -
-	if(event.getBeamPolarisation() == -1){
-		m_hDistributions->Fill(event.getT(), weight);
-	}
-
-	//pol +
-	else if(event.getBeamPolarisation() == 1){
-		m_hDistributions->Fill(event.getT(), weight);
-	}
-
-	//none
-	else{
-
-		std::cout << getClassName() << "::" << __func__ << " error: " << 
-			"wrong polarisation, " << event.getBeamPolarisation() << std::endl;
-		exit(0);
-	}
+	//fill
+	m_hDistributions->Fill(-1 * event.getT(), weight);
+	
 
 	//add
 	m_sumXB += weight * event.getXB();
@@ -136,8 +122,6 @@ void BinTSlope::print() const{
 		"range xB: min: " << m_rangeXB.first << " max: " << m_rangeXB.second << " mean (from events): " << getMeanXB() << std::endl;
 	std::cout << getClassName() << "::" << __func__ << " debug: " << 
 		"range Q2: min: " << m_rangeQ2.first << " max: " << m_rangeQ2.second << " mean (from events): " << getMeanQ2() << std::endl;
-	std::cout << getClassName() << "::" << __func__ << " debug: " << 
-		"range |t|: min: " << m_rangeT.first << " max: " << m_rangeT.second << " mean (from events): " << getMeanT() << std::endl;
 }
 
 const std::pair<double, double>& BinTSlope::getRangeXB() const{
