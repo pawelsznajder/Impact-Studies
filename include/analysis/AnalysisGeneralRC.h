@@ -1,5 +1,5 @@
-#ifndef ANALYSIS_GENERAL_H
-#define ANALYSIS_GENERAL_H
+#ifndef ANALYSIS_GENERALRC_H
+#define ANALYSIS_GENERALRC_H
 
 #include <TH2.h>
 #include <TH1.h>
@@ -10,15 +10,15 @@
 /*
  * Class for general analysis.
  */
-class AnalysisGeneral : public Analysis{
+class AnalysisGeneralRC : public Analysis{
 
 public:
 
 	//constructor
-	AnalysisGeneral();
+	AnalysisGeneralRC();
 
 	//destructor
-	virtual ~AnalysisGeneral();
+	virtual ~AnalysisGeneralRC();
 
 	//fill with events
 	virtual void fill(DVCSEvent& event, double weight);
@@ -32,17 +32,12 @@ public:
 private:
 
 	//2D histograms
-	TH2* m_hXBvsQ2;
+	TH2* m_hXBvsXB;
+	TH2* m_hQ2vsQ2;
+	TH2* m_hTvsT;
+	TH2* m_hPhivsPhi;
+	TH2* m_hPhiSvsPhiS;
+	TH2* m_hYvsY;
 
-	//1D histograms
-	TH1* m_hXB;
-	TH1* m_hQ2;
-	TH1* m_hT;
-	TH1* m_hPhi;
-	TH1* m_hPhiS;
-	TH1* m_hY;
-	TH1* m_hEtaEOut;
-	TH1* m_hEtaPOut;
-	TH1* m_hEtaGOut;
 };
 #endif

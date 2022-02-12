@@ -5,6 +5,7 @@
 #include <HepMC3/ReaderAscii.h>
 
 #include "../include/analysis/AnalysisGeneral.h"
+#include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
 
@@ -18,6 +19,7 @@ int main(int argc, char* argv[]){
 
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
+	AnalysisGeneralRC analysisGeneralRC;
 	AnalysisALU analysisALU;
 	AnalysisTSlope analysisTSlope;
 
@@ -105,8 +107,9 @@ int main(int argc, char* argv[]){
 	               	 	//fill
 	               	 	//TODO add weight 
 	               	 	analysisGeneral.fill(dvcsEvent, 1.);
+	               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
 	               	 	analysisALU.fill(dvcsEvent, 1.);
-				analysisTSlope.fill(dvcsEvent, 1.);
+						analysisTSlope.fill(dvcsEvent, 1.);
 					}
 
 					//close file
@@ -118,11 +121,13 @@ int main(int argc, char* argv[]){
    
 	//analyse
 	analysisGeneral.analyse();
+	analysisGeneralRC.analyse();
 	analysisALU.analyse();
 	analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
+	analysisGeneralRC.plot("analysisGeneralRC.pdf");
 	analysisALU.plot("analysisALU.pdf");
 	analysisTSlope.plot("analysisTSlope.pdf");
 
