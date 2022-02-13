@@ -6,6 +6,7 @@
 
 #include "../include/analysis/Analysis.h"
 #include "../include/event/DVCSEvent.h"
+#include "../include/other/MeanSigmaAnalyser.h"
 
 /*
  * Class for general analysis.
@@ -38,6 +39,16 @@ private:
 	TH2* m_hPhivsPhi;
 	TH2* m_hPhiSvsPhiS;
 	TH2* m_hYvsY;
+
+	//analysers
+	MeanSigmaAnalyser* m_analyserXB;
+	MeanSigmaAnalyser* m_analyserQ2;
+	MeanSigmaAnalyser* m_analyserT;
+	MeanSigmaAnalyser* m_analyserPhi;
+	MeanSigmaAnalyser* m_analyserPhiS;
+	MeanSigmaAnalyser* m_analyserY;
+
+	void drawMeanSigmaAnalyserHistogram(TH1* h) const;
 
 };
 #endif
