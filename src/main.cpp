@@ -50,10 +50,14 @@ int main(int argc, char* argv[]){
 				std::pair<double, double> crossSection;
 				size_t nEvents;
 				int beamPolarisation;
+				bool isRCSample = false;
 
 				//read to collect atributes ===============
 				{
 					HepMC3::ReaderAscii inputFile(dirEntry.path());
+
+					//to check if RC sample
+					size_t lastParticleSize = 0;
 
 					//loop over events
 					for(;;){
@@ -63,6 +67,16 @@ int main(int argc, char* argv[]){
 	               
 	               		//read
 	          			inputFile.read_event(evt);
+
+	          			//if the number of particles is not fixed, we have RC sample
+	          			if(evt.particles_size() != 0 && evt.particles_size() != lastParticleSize){
+
+	          				if(lastParticleSize == 0){
+	          					lastParticleSize = evt.particles_size();
+	          				}else{
+	          					isRCSample = true;
+	          				}
+	          			}
 
 	                	//if reading failed - exit loop
 	                	if(inputFile.failed() ) break;
@@ -102,7 +116,7 @@ int main(int argc, char* argv[]){
 
 	                	//DVCS event 
 	                	//TODO add beam charge and target polarisation
-	               	 	DVCSEvent dvcsEvent(evt, beamPolarisation, -1, TVector3(0., 0., 0.));
+	               	 	DVCSEvent dvcsEvent(evt, beamPolarisation, -1, TVector3(0., 0., 0.), isRCSample);
 
 	               	 	//fill
 	               	 	//TODO add weight 
