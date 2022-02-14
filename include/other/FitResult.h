@@ -1,7 +1,7 @@
 #ifndef FIT_RESULT_H
 #define FIT_RESULT_H
 
-#include<vector>
+#include <vector>
 
 #include "../../include/other/BaseObject.h"
 

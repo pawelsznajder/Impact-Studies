@@ -31,10 +31,10 @@ public:
 
 private:
 
-	//examplary histogram
+	//2D histograms
 	TH2* m_hXBvsQ2;
 
-	// 1D histogram
+	//1D histograms
 	TH1* m_hXB;
 	TH1* m_hQ2;
 	TH1* m_hT;

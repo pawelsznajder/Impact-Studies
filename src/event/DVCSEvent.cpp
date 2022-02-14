@@ -7,7 +7,7 @@
 using namespace HepMC3;
 
 DVCSEvent::DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
-                const TVector3& targetPolarisation) : BaseObject("DVCSEvent"){
+                const TVector3& targetPolarisation, bool isRCSample) : BaseObject("DVCSEvent"){
 
         //four-momenta
         m_eIn = getEIn(evt);
@@ -27,6 +27,9 @@ DVCSEvent::DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
 
         //target polarisation
         m_targetPolarisation = targetPolarisation;
+
+        //from sample including RCs
+        m_isRCSample = isRCSample;
 }
 
 DVCSEvent::~DVCSEvent(){
@@ -426,7 +429,11 @@ void DVCSEvent::loadThisRC(int rc){
         m_this_rc = rc;
 }
 
- bool DVCSEvent::checkIfRC(RCType::Type rcType) const{
+bool DVCSEvent::isRCSample() const{
+
+}
+
+ bool DVCSEvent::checkRCType(RCType::Type rcType) const{
 
         if(rcType == RCType::ISR){
                 return m_eIn.find(RCType::ISR) == m_eIn.end();  

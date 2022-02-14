@@ -18,7 +18,7 @@ public:
 
         //constructor
         DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
-                const TVector3& targetPolarisation);
+                const TVector3& targetPolarisation, bool isRCSample);
 
         //destructor
         virtual ~DVCSEvent();
@@ -59,8 +59,11 @@ public:
         //get target polarisation
         TVector3 getTargetPolarisation() const;
 
+        //check if from RC sample
+        bool isRCSample() const;
+
         //check if contains given type of radiation
-        bool checkIfRC(RCType::Type rcType) const;
+        bool checkRCType(RCType::Type rcType) const;
 
 private:
 
@@ -117,6 +120,9 @@ private:
 
         //target polarisation
         TVector3 m_targetPolarisation;
+
+        //true if from sample including RCs
+        bool m_isRCSample;
 };
 
 #endif

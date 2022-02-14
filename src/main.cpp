@@ -5,6 +5,7 @@
 #include <HepMC3/ReaderAscii.h>
 
 #include "../include/analysis/AnalysisGeneral.h"
+#include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
 
@@ -18,6 +19,7 @@ int main(int argc, char* argv[]){
 
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
+	AnalysisGeneralRC analysisGeneralRC;
 	AnalysisALU analysisALU;
 	AnalysisTSlope analysisTSlope;
 
@@ -48,10 +50,14 @@ int main(int argc, char* argv[]){
 				std::pair<double, double> crossSection;
 				size_t nEvents;
 				int beamPolarisation;
+				bool isRCSample = false;
 
 				//read to collect atributes ===============
 				{
 					HepMC3::ReaderAscii inputFile(dirEntry.path());
+
+					//to check if RC sample
+					size_t lastParticleSize = 0;
 
 					//loop over events
 					for(;;){
@@ -61,6 +67,16 @@ int main(int argc, char* argv[]){
 	               
 	               		//read
 	          			inputFile.read_event(evt);
+
+	          			//if the number of particles is not fixed, we have RC sample
+	          			if(evt.particles_size() != 0 && evt.particles_size() != lastParticleSize){
+
+	          				if(lastParticleSize == 0){
+	          					lastParticleSize = evt.particles_size();
+	          				}else{
+	          					isRCSample = true;
+	          				}
+	          			}
 
 	                	//if reading failed - exit loop
 	                	if(inputFile.failed() ) break;
@@ -100,13 +116,14 @@ int main(int argc, char* argv[]){
 
 	                	//DVCS event 
 	                	//TODO add beam charge and target polarisation
-	               	 	DVCSEvent dvcsEvent(evt, beamPolarisation, -1, TVector3(0., 0., 0.));
+	               	 	DVCSEvent dvcsEvent(evt, beamPolarisation, -1, TVector3(0., 0., 0.), isRCSample);
 
 	               	 	//fill
 	               	 	//TODO add weight 
 	               	 	analysisGeneral.fill(dvcsEvent, 1.);
+	               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
 	               	 	analysisALU.fill(dvcsEvent, 1.);
-				analysisTSlope.fill(dvcsEvent, 1.);
+						analysisTSlope.fill(dvcsEvent, 1.);
 					}
 
 					//close file
@@ -118,11 +135,13 @@ int main(int argc, char* argv[]){
    
 	//analyse
 	analysisGeneral.analyse();
+	analysisGeneralRC.analyse();
 	analysisALU.analyse();
 	analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
+	analysisGeneralRC.plot("analysisGeneralRC.pdf");
 	analysisALU.plot("analysisALU.pdf");
 	analysisTSlope.plot("analysisTSlope.pdf");
 
