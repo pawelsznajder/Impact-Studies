@@ -13,7 +13,12 @@ add_compile_options()
 # add linking options
 if (UNIX)
 	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-		set(UNIX_LIBRARIES stdc++fs)
+
+		if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0)
+			find_package(Boost COMPONENTS filesystem REQUIRED)
+		else()
+			set(UNIX_LIBRARIES stdc++fs)
+		endif()
 	endif()
 endif ()
 
@@ -27,7 +32,7 @@ find_package(ROOT COMPONENTS Core Hist REQUIRED)
 find_package(HepMC3 REQUIRED)
 
 # includes
-include_directories("${PROJECT_SOURCE_DIR}/include" ${ROOT_INCLUDE_DIRS} ${HEPMC3_INCLUDE_DIR})
+include_directories("${PROJECT_SOURCE_DIR}/include" ${ROOT_INCLUDE_DIRS} ${HEPMC3_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 
 # src
 file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
@@ -36,4 +41,4 @@ file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_executable(eic_impact_studies "${SOURCES}")
 set_target_properties(eic_impact_studies PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
-target_link_libraries(eic_impact_studies "${ROOT_LIBRARIES}" "${HEPMC3_LIBRARIES}" "${UNIX_LIBRARIES}")
+target_link_libraries(eic_impact_studies "${ROOT_LIBRARIES}" "${HEPMC3_LIBRARIES}" "${UNIX_LIBRARIES}" "${Boost_LIBRARIES}")

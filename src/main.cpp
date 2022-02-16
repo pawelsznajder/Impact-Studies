@@ -14,12 +14,17 @@
 #endif
 
 #ifdef __linux__
-    #if __GNUC__ >= 9
+    #if __GNUC__ < 9
+    	    #if __GNUC__ < 6
+		 #include <boost/filesystem.hpp>
+           	 namespace fs = boost::filesystem; 
+	    #else
+            	 #include <experimental/filesystem>
+            	 namespace fs = std::experimental::filesystem;
+    	    #endif
+    #else
             #include <filesystem>
             namespace fs = std::filesystem;
-    #else
-            #include <experimental/filesystem>
-            namespace fs = std::experimental::filesystem;
     #endif
 #endif
 
@@ -48,17 +53,20 @@ int main(int argc, char* argv[]){
 		}
 
 		//loop over files
-		for (const auto& dirEntry : fs::recursive_directory_iterator(argv[i])){
+//		for (const auto& dirEntry : fs::recursive_directory_iterator(fs::path(argv[i]))){
+		const boost::filesystem::recursive_directory_iterator end;
+		for(boost::filesystem::recursive_directory_iterator dirEntry(fs::path(argv[i])); dirEntry != end; dirEntry++){
+
 
 			//skip directories
-			if(! fs::is_regular_file(dirEntry)) continue;
+			if(! fs::is_regular_file(dirEntry->status())) continue;
 
 			//txt
-			if(dirEntry.path().extension() == ".txt"){
+			if(dirEntry->path().extension() == ".txt"){
 				
 				//print
 				std::cout << __func__ << 
-					" info: reading: " << dirEntry.path() << std::endl;
+					" info: reading: " << dirEntry->path() << std::endl;
 
 				//variables
 				std::pair<double, double> crossSection;
@@ -68,7 +76,7 @@ int main(int argc, char* argv[]){
 
 				//read to collect atributes ===============
 				{
-					HepMC3::ReaderAscii inputFile(dirEntry.path());
+					HepMC3::ReaderAscii inputFile(dirEntry->path().string());
 
 					//to check if RC sample
 					size_t lastParticleSize = 0;
@@ -83,10 +91,10 @@ int main(int argc, char* argv[]){
 	          			inputFile.read_event(evt);
 
 	          			//if the number of particles is not fixed, we have RC sample
-	          			if(evt.particles_size() != 0 && evt.particles_size() != lastParticleSize){
+	          			if(evt.particles().size() != 0 && evt.particles().size() != lastParticleSize){
 
 	          				if(lastParticleSize == 0){
-	          					lastParticleSize = evt.particles_size();
+	          					lastParticleSize = evt.particles().size();
 	          				}else{
 	          					isRCSample = true;
 	          				}
@@ -114,7 +122,7 @@ int main(int argc, char* argv[]){
 
     			//read to process events ===============
     			{
-					HepMC3::ReaderAscii inputFile(dirEntry.path());
+					HepMC3::ReaderAscii inputFile(dirEntry->path().string());
 
 					//loop over events
 					for(;;){
