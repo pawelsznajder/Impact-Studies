@@ -169,7 +169,7 @@ std::map<RCType::Type, TLorentzVector> DVCSEvent::getEOut(const GenEvent& evt) c
                 //FSR (comes from e -> e + gamma vertex and does not end in any vertex) 
                 if((*it)->parents().size() == 1 && (*it)->children().size() == 0){
 
-                        if((*it)->production_vertex()->particles_out_size() == 2){
+                        if((*it)->production_vertex()->particles_out().size() == 2){
 
                                 bool hasE = false;
                                 bool hasGamma = false;
@@ -191,7 +191,7 @@ std::map<RCType::Type, TLorentzVector> DVCSEvent::getEOut(const GenEvent& evt) c
                 //Born (comes from e -> e + gamma* vertex) 
                 if((*it)->parents().size() == 1){
 
-                        if((*it)->production_vertex()->particles_out_size() == 2){
+                        if((*it)->production_vertex()->particles_out().size() == 2){
 
                                 bool hasE = false;
                                 bool hasGammaStar = false;

@@ -1,5 +1,4 @@
 #include <cmath>
-#include <filesystem>
 #include <iostream>
 #include <cstdlib>
 #include <HepMC3/ReaderAscii.h>
@@ -8,6 +7,21 @@
 #include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
+
+#ifdef __APPLE__
+    #include <filesystem>
+    namespace fs = std::filesystem;
+#endif
+
+#ifdef __linux__
+    #if __GNUC__ >= 9
+            #include <filesystem>
+            namespace fs = std::filesystem;
+    #else
+            #include <experimental/filesystem>
+            namespace fs = std::experimental::filesystem;
+    #endif
+#endif
 
 int main(int argc, char* argv[]){
 
@@ -27,17 +41,17 @@ int main(int argc, char* argv[]){
 	for(size_t i = 1; i < argc; i++){
 
 		//check if exists
-		if(! std::filesystem::exists(std::filesystem::path(argv[i]))){
+		if(! fs::exists(fs::path(argv[i]))){
 			
 			std::cout << __func__ << " warning: directory: " << argv[i] << " does not exist" << std::endl;
 			continue;
 		}
 
 		//loop over files
-		for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(argv[i])){
+		for (const auto& dirEntry : fs::recursive_directory_iterator(argv[i])){
 
 			//skip directories
-			if(! dirEntry.is_regular_file()) continue;
+			if(! fs::is_regular_file(dirEntry)) continue;
 
 			//txt
 			if(dirEntry.path().extension() == ".txt"){
