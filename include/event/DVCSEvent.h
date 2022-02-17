@@ -18,7 +18,7 @@ public:
 
         //constructor
         DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
-                const TVector3& targetPolarisation, bool isRCSample);
+                const TVector3& targetPolarisation, bool isRCSample, int subProcessTypeMask);
 
         //destructor
         virtual ~DVCSEvent();
@@ -63,7 +63,10 @@ public:
         bool isRCSample() const;
 
         //check if contains given type of radiation
-        bool checkRCType(RCType::Type rcType) const;
+        bool checkRCType(int rcTypeMask) const;
+
+        //check subprocess
+        bool checkSubProcessType(int subProcessTypeMask) const;
 
 private:
 
@@ -89,6 +92,9 @@ private:
 
         //find four-momentum of DVCS photon in HepMC3 event 
         std::map<RCType::Type, TLorentzVector> getGammaOut(const GenEvent& evt) const;
+
+        //rc mask (indicated which types of RCs one observes in this event)
+        int m_rcTypeMask;
 
         //four-momenta
         std::map<RCType::Type, TLorentzVector> m_eIn;
@@ -123,6 +129,9 @@ private:
 
         //true if from sample including RCs
         bool m_isRCSample;
+
+        //subrpocess mask
+        int m_subProcessTypeMask;
 };
 
 #endif
