@@ -1,5 +1,4 @@
 #include <cmath>
-#include <filesystem>
 #include <iostream>
 #include <cstdlib>
 #include <HepMC3/ReaderAscii.h>
@@ -8,6 +7,29 @@
 #include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
+
+#ifdef __APPLE__
+    #include <filesystem>
+    namespace fs = std::filesystem;
+#endif
+
+#ifdef __linux__
+    #if __GNUC__ < 9
+    	    #if __GNUC__ < 6
+
+    			#define __USE_BOOST__
+
+		 		#include <boost/filesystem.hpp>
+           	 	namespace fs = boost::filesystem; 
+	    #else
+            	 #include <experimental/filesystem>
+            	 namespace fs = std::experimental::filesystem;
+    	    #endif
+    #else
+            #include <filesystem>
+            namespace fs = std::filesystem;
+    #endif
+#endif
 
 int main(int argc, char* argv[]){
 
@@ -27,24 +49,45 @@ int main(int argc, char* argv[]){
 	for(size_t i = 1; i < argc; i++){
 
 		//check if exists
-		if(! std::filesystem::exists(std::filesystem::path(argv[i]))){
+		if(! fs::exists(fs::path(argv[i]))){
 			
 			std::cout << __func__ << " warning: directory: " << argv[i] << " does not exist" << std::endl;
 			continue;
 		}
 
 		//loop over files
-		for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(argv[i])){
-
+		#ifdef __USE_BOOST__
+			const fs::recursive_directory_iterator end;
+			for(fs::recursive_directory_iterator dirEntry(fs::path(argv[i])); dirEntry != end; dirEntry++){
+		#else
+			for(const auto& dirEntry : fs::recursive_directory_iterator(fs::path(argv[i]))){
+		#endif
+		
 			//skip directories
-			if(! dirEntry.is_regular_file()) continue;
+			#ifdef __USE_BOOST__
+				 if(! fs::is_regular_file(dirEntry->status())) continue;
+			#else
+				 if(! fs::is_regular_file(dirEntry.status())) continue;
+			#endif
 
 			//txt
-			if(dirEntry.path().extension() == ".txt"){
+			#ifdef __USE_BOOST__
+				if(dirEntry->path().extension() == ".txt"){
+			#else
+				if(dirEntry.path().extension() == ".txt"){
+			#endif
+
+				//get path
+				#ifdef __USE_BOOST__
+					std::string path = dirEntry->path().string();
+				#else
+					std::string path = dirEntry.path().string();
+				#endif
 				
+			
 				//print
 				std::cout << __func__ << 
-					" info: reading: " << dirEntry.path() << std::endl;
+					" info: reading: " << path << std::endl;
 
 				//variables
 				std::pair<double, double> crossSection;
@@ -54,7 +97,7 @@ int main(int argc, char* argv[]){
 
 				//read to collect atributes ===============
 				{
-					HepMC3::ReaderAscii inputFile(dirEntry.path());
+					HepMC3::ReaderAscii inputFile(path);
 
 					//to check if RC sample
 					size_t lastParticleSize = 0;
@@ -69,10 +112,10 @@ int main(int argc, char* argv[]){
 	          			inputFile.read_event(evt);
 
 	          			//if the number of particles is not fixed, we have RC sample
-	          			if(evt.particles_size() != 0 && evt.particles_size() != lastParticleSize){
+	          			if(evt.particles().size() != 0 && evt.particles().size() != lastParticleSize){
 
 	          				if(lastParticleSize == 0){
-	          					lastParticleSize = evt.particles_size();
+	          					lastParticleSize = evt.particles().size();
 	          				}else{
 	          					isRCSample = true;
 	          				}
@@ -100,7 +143,7 @@ int main(int argc, char* argv[]){
 
     			//read to process events ===============
     			{
-					HepMC3::ReaderAscii inputFile(dirEntry.path());
+					HepMC3::ReaderAscii inputFile(path);
 
 					//loop over events
 					for(;;){
