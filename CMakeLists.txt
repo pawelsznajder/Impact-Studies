@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_compile_options()
 
 # add linking options
-if (UNIX)
+if(UNIX)
 	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
 
 		if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0)
@@ -20,7 +20,7 @@ if (UNIX)
 			set(UNIX_LIBRARIES stdc++fs)
 		endif()
 	endif()
-endif ()
+endif()
 
 # additional modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
@@ -29,7 +29,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 find_package(ROOT COMPONENTS Core Hist REQUIRED)
 
 # find HepMC3
-find_package(HepMC3 REQUIRED)
+if(NOT(HEPMC3_INCLUDE_DIR AND HEPMC3_LIBRARIES))
+	find_package(HepMC3 REQUIRED)
+endif ()
 
 # includes
 include_directories("${PROJECT_SOURCE_DIR}/include" ${ROOT_INCLUDE_DIRS} ${HEPMC3_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
