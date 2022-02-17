@@ -7,6 +7,7 @@
 #include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
+#include "../include/other/SubProcessType.h"
 
 #ifdef __APPLE__
     #include <filesystem>
@@ -94,6 +95,7 @@ int main(int argc, char* argv[]){
 				size_t nEvents;
 				int beamPolarisation;
 				bool isRCSample = false;
+				int subProcessTypeMask;
 
 				//read to collect atributes ===============
 				{
@@ -136,6 +138,8 @@ int main(int argc, char* argv[]){
 						std::stoul((runInfo->attributes().find("generated_events_number")->second)->unparsed_string());
 					beamPolarisation = 
 						std::stoi((runInfo->attributes().find("beam_polarisation")->second)->unparsed_string());
+					subProcessTypeMask = SubProcessType::getSubProcessTypeMaskFromStdString(
+						(runInfo->attributes().find("suprocesses_type")->second)->unparsed_string());
 
 					//close
     				inputFile.close();
@@ -159,7 +163,7 @@ int main(int argc, char* argv[]){
 
 	                	//DVCS event 
 	                	//TODO add beam charge and target polarisation
-	               	 	DVCSEvent dvcsEvent(evt, beamPolarisation, -1, TVector3(0., 0., 0.), isRCSample);
+	               	 	DVCSEvent dvcsEvent(evt, beamPolarisation, -1, TVector3(0., 0., 0.), isRCSample, subProcessTypeMask);
 
 	               	 	//fill
 	               	 	//TODO add weight 

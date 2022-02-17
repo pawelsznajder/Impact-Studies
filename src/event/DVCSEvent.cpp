@@ -7,7 +7,7 @@
 using namespace HepMC3;
 
 DVCSEvent::DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
-                const TVector3& targetPolarisation, bool isRCSample) : BaseObject("DVCSEvent"){
+                const TVector3& targetPolarisation, bool isRCSample, int subProcessTypeMask) : BaseObject("DVCSEvent"){
 
         //four-momenta
         m_eIn = getEIn(evt);
@@ -15,6 +15,12 @@ DVCSEvent::DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
         m_pIn = getPIn(evt);
         m_pOut = getPOut(evt);
         m_gammaOut = getGammaOut(evt);
+
+        //mask
+        m_rcTypeMask = RCType::Born;
+
+        if(m_eIn.find(RCType::ISR) != m_eIn.end()) m_rcTypeMask |= RCType::ISR;
+        if(m_eOut.find(RCType::FSR) != m_eOut.end()) m_rcTypeMask |= RCType::FSR;
 
         //rc flag
         m_this_rc = -1;
@@ -30,6 +36,9 @@ DVCSEvent::DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
 
         //from sample including RCs
         m_isRCSample = isRCSample;
+
+        //sub process type
+        m_subProcessTypeMask = subProcessTypeMask;
 }
 
 DVCSEvent::~DVCSEvent(){
@@ -430,25 +439,16 @@ void DVCSEvent::loadThisRC(int rc){
 }
 
 bool DVCSEvent::isRCSample() const{
-
+        return m_isRCSample;
 }
 
- bool DVCSEvent::checkRCType(RCType::Type rcType) const{
-
-        if(rcType == RCType::ISR){
-                return m_eIn.find(RCType::ISR) == m_eIn.end();  
-        }   
-
-        if(rcType == RCType::FSR){
-                return m_eOut.find(RCType::FSR) == m_eOut.end();  
-        }   
-
-        std::cout << getClassName() << "::" << __func__ << " error: " << 
-                "wrong RC type, " << RCType(rcType).toString() << std::endl;
-        exit(0);
-
-        return false;
+ bool DVCSEvent::checkRCType(int rcTypeMask) const{
+        return (m_rcTypeMask & rcTypeMask);
  }
+
+bool DVCSEvent::checkSubProcessType(int subProcessTypeMask) const{
+        return (m_subProcessTypeMask & subProcessTypeMask);
+}
 
         
 
