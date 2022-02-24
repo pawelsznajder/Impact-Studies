@@ -43,14 +43,17 @@ void AnalysisALU::analyse(){
 		it != m_bins.end(); it++){
 
 		//make analysis
-		FitResult fitResult = it->analyse();
+		it->analyse();
 
-		//print if only something happend 
-		if(fitResult.getStatusCode() != -10){
+		//get results
+		FitResult* fitResult = it->getFitResult();
 
-			it->print();
-			fitResult.print();
-		}
+		//check if not empty
+		if(fitResult == nullptr) continue;
+
+		//print
+		it->print();
+		fitResult->print();
 	}
 }
 

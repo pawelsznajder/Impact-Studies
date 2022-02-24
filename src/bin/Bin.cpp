@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-Bin::Bin(const std::string& className) : BaseObject(className){
-	reset();
+Bin::Bin(const std::string& className) : BaseObject(className), 
+	m_nEvents(0), m_sumWeights(0.), m_fitResult(nullptr){
 }
 
 Bin::~Bin(){
@@ -11,7 +11,15 @@ Bin::~Bin(){
 }
 
 void Bin::reset(){
+
 	m_nEvents = 0;
+	m_sumWeights = 0.;
+
+	if(m_fitResult){
+
+		delete m_fitResult;
+		m_fitResult = nullptr;
+	}
 }
 
 void Bin::fill(DVCSEvent& event, double weight){
@@ -27,10 +35,7 @@ void Bin::fill(DVCSEvent& event, double weight){
 	m_sumWeights += weight;
 }
 
-FitResult Bin::analyse(){
-	
-	//return 
-	return FitResult();
+void Bin::analyse(){
 }
 
 double Bin::getMean(double sum, double sumOfWeights) const{
@@ -82,4 +87,8 @@ size_t Bin::getNEvents() const{
 
 double Bin::getSumWeights() const{
 	return m_sumWeights;
+}
+
+FitResult* Bin::getFitResult() const{
+	return m_fitResult;
 }

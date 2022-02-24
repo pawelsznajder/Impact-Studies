@@ -100,14 +100,19 @@ void BinALU::fill(DVCSEvent& event, double weight){
 	m_sumPhi += weight * event.getPhi();
 }
 
-FitResult BinALU::analyse(){
+void BinALU::analyse(){
 	
 	//run for parent class
 	Bin::analyse();
 
 	//skip bins with low entry
 	if(m_nEvents < 100){
-		return FitResult();
+		return;
+	}
+
+	//skip bins with low summed weights
+	if(m_sumWeights < 100.){
+		return;
 	}
 
 	//make asymmetry histogram
@@ -120,18 +125,21 @@ FitResult BinALU::analyse(){
 	int statusCode = int(m_hAsymmetry->Fit(m_fFit, "0"));
 
 	//store results
-	FitResult result;
+	if(m_fitResult){
 
-	result.setStatusCode(statusCode);
-	result.setNPoints(m_fFit->GetNumberFitPoints());
-	result.setChi2(m_fFit->GetChisquare());
-
-	for(size_t i = 0; i < m_fFit->GetNpar(); i++){
-		result.addParameter(std::make_pair(m_fFit->GetParameter(i), m_fFit->GetParError(i)));
+		delete m_fitResult;
+		m_fitResult = nullptr;
 	}
 
-	//return
-	return result;
+	m_fitResult = new FitResult();
+
+	m_fitResult->setStatusCode(statusCode);
+	m_fitResult->setNPoints(m_fFit->GetNumberFitPoints());
+	m_fitResult->setChi2(m_fFit->GetChisquare());
+
+	for(size_t i = 0; i < m_fFit->GetNpar(); i++){
+		m_fitResult->addParameter(std::make_pair(m_fFit->GetParameter(i), m_fFit->GetParError(i)));
+	}
 }
 
 void BinALU::print() const{

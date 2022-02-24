@@ -27,12 +27,12 @@ BinTSlope::BinTSlope(
 		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
  
 	//make histograms
-	m_hDistributions = new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
+	m_hDistribution = new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
 					nTBins, rangeT.first, rangeT.second);
 
 
 	//set sumw2
-	m_hDistributions->Sumw2();
+	m_hDistribution->Sumw2();
 
 	//function for fitting
 	m_fFit = new TF1((HashManager::getInstance()->getHash()).c_str(), "[0]*exp(-1*[1]*x)", 0., 2.);
@@ -60,7 +60,7 @@ void BinTSlope::reset(){
 	m_nEvents = 0;
 
 	//reset histograms
-	m_hDistributions = nullptr;
+	m_hDistribution = nullptr;
 	m_hTSlope = nullptr;
 }
 
@@ -70,7 +70,7 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 	Bin::fill(event, weight);
 
 	//fill
-	m_hDistributions->Fill(-1 * event.getT(), weight);
+	m_hDistribution->Fill(-1 * event.getT(), weight);
 	
 
 	//add
@@ -79,18 +79,23 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 	m_sumT += weight * event.getT();
 }
 
-FitResult BinTSlope::analyse(){
+void BinTSlope::analyse(){
 	
 	//run for parent class
 	Bin::analyse();
 
 	//skip bins with low entry
 	if(m_nEvents < 100){
-		return FitResult();
+		return;
+	}
+
+	//skip bins with low summed weights
+	if(m_sumWeights < 100.){
+		return;
 	}
 
 	//make t-slope histogram
-	m_hTSlope = m_hDistributions;
+	m_hTSlope = static_cast<TH1*>(m_hDistribution->Clone());
 
 	//fit
 	//fit options: 
@@ -98,18 +103,21 @@ FitResult BinTSlope::analyse(){
 	int statusCode = int(m_hTSlope->Fit(m_fFit, "0"));
 
 	//store results
-	FitResult result;
+	if(m_fitResult){
 
-	result.setStatusCode(statusCode);
-	result.setNPoints(m_fFit->GetNumberFitPoints());
-	result.setChi2(m_fFit->GetChisquare());
-
-	for(size_t i = 0; i < m_fFit->GetNpar(); i++){
-		result.addParameter(std::make_pair(m_fFit->GetParameter(i), m_fFit->GetParError(i)));
+		delete m_fitResult;
+		m_fitResult = nullptr;
 	}
 
-	//return
-	return result;
+	m_fitResult = new FitResult();
+
+	m_fitResult->setStatusCode(statusCode);
+	m_fitResult->setNPoints(m_fFit->GetNumberFitPoints());
+	m_fitResult->setChi2(m_fFit->GetChisquare());
+
+	for(size_t i = 0; i < m_fFit->GetNpar(); i++){
+		m_fitResult->addParameter(std::make_pair(m_fFit->GetParameter(i), m_fFit->GetParError(i)));
+	}
 }
 
 void BinTSlope::print() const{
@@ -148,8 +156,8 @@ double BinTSlope::getMeanT() const{
 	return getMean(m_sumT, m_sumWeights);
 }
 
-TH1* BinTSlope::getHDistributions() const{
-	return m_hDistributions;
+TH1* BinTSlope::getHDistribution() const{
+	return m_hDistribution;
 }
 
 TH1* BinTSlope::getHTSlope() const{

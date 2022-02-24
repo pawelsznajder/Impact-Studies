@@ -35,7 +35,7 @@ public:
 	virtual void print() const;
 
 	//analyse
-	virtual FitResult analyse();
+	virtual void analyse();
 
 	//get range xB
 	const std::pair<double, double>& getRangeXB() const;
@@ -56,7 +56,7 @@ public:
 	double getMeanT() const;
 
 	//get histograms to store events
-	TH1* getHDistributions() const;
+	TH1* getHDistribution() const;
 
 	//get histograms for resulting t-slope
 	TH1* getHTSlope() const;
@@ -71,9 +71,9 @@ private:
 	double m_sumQ2;		//sum of Q2 values.
 	double m_sumT;		//sum of t values.
 
-	TH1* m_hDistributions;	//histograms to store events
-	TH1* m_hTSlope;		//histogram for resulting t-slope
-	TF1* m_fFit;		//function for fitting 
+	TH1* m_hDistribution;	//histograms to store events
+	TH1* m_hTSlope;			//histogram for resulting t-slope
+	TF1* m_fFit;			//function for fitting 
 };
 
 #endif

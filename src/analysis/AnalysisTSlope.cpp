@@ -3,9 +3,11 @@
 #include <cmath>
 #include <sstream>
 #include <TCanvas.h>
+#include <TGraphErrors.h>
 
 
 #include "../../include/other/HashManager.h"
+#include "../../include/other/SubProcessType.h"
 
 AnalysisTSlope::AnalysisTSlope() : Analysis("AnalysisTSlope"){
 
@@ -20,6 +22,10 @@ AnalysisTSlope::~AnalysisTSlope(){
 }
 
 void AnalysisTSlope::fill(DVCSEvent& event, double weight){
+
+	if(event.checkSubProcessType(SubProcessType::DVCS) == 0 && event.checkSubProcessType(SubProcessType::BH) == 1) {
+		weight *= -1.;
+	}
 
 	for(std::vector<BinTSlope>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
@@ -41,34 +47,41 @@ void AnalysisTSlope::analyse(){
 		it != m_bins.end(); it++){
 
 		//make analysis
-		FitResult fitResult = it->analyse();
+		it->analyse();
 
-		//print if only something happend 
-		if(fitResult.getStatusCode() != -10){
+		//get results
+		FitResult* fitResult = it->getFitResult();
 
-			it->print();
-			fitResult.print();
-		}
+		//check if not empty
+		if(fitResult == nullptr) continue;
+
+		//print
+		it->print();
+		fitResult->print();
 	}
 }
 
 void AnalysisTSlope::plot(const std::string& path){
 
 	//canvases
-	TCanvas* cans[1];
+	std::vector<TCanvas*> cans;
 
 	//labes
 	std::stringstream ss;
 
-	//loop over canvases for this t bin
+	//===============================================
+	// ONE CANVAS ALL PLOTS
+	//===============================================
+
+	//loop over canvases for plotting xB vs. Q2 grid
 	for(size_t i = 0; i < 1; i++){
 
 		//new
-		cans[i] = new TCanvas(
-				(HashManager::getInstance()->getHash()).c_str(), ss.str().c_str());
+		cans.push_back(new TCanvas(
+				(HashManager::getInstance()->getHash()).c_str(), ss.str().c_str()));
 
 		//divide
-		cans[i]->Divide(m_binRangesXB.size(), m_binRangesQ2.size());
+		cans.back()->Divide(m_binRangesXB.size(), m_binRangesQ2.size());
 
 		//plot
 		for(std::vector<std::pair<double, double> >::const_iterator itXB = m_binRangesXB.begin(); 
@@ -96,17 +109,14 @@ void AnalysisTSlope::plot(const std::string& path){
 					exit(0);
 				}
 
-				//check if not empty
-				if(itBin->getNEvents() == 0) continue;
-
 				//set pad
-				cans[i]->cd(1 + 
+				cans.back()->cd(1 + 
 					size_t(itXB - m_binRangesXB.begin()) + 
 					(size_t(m_binRangesQ2.end() - itQ2) - 1) * m_binRangesXB.size() 
 				);
 
 				//set log-scale
-				cans[i]->cd(1 + 
+				cans.back()->cd(1 + 
 					size_t(itXB - m_binRangesXB.begin()) + 
 					(size_t(m_binRangesQ2.end() - itQ2) - 1) * m_binRangesXB.size())->SetLogy();
 
@@ -117,10 +127,6 @@ void AnalysisTSlope::plot(const std::string& path){
 
 					 //check if not empty
 					 if(h != nullptr){
-
-						 //set minimum and maximum
-						 h->SetMinimum(1.);
-					 	 //h->SetMaximum(10000.);
 
 						 //no stats
 						 h->SetStats(0);
@@ -140,18 +146,171 @@ void AnalysisTSlope::plot(const std::string& path){
 		}
 	}
 
-	//print
-	for(size_t i = 0; i < 1; i++){
+	//===============================================
+	// ONE CANVAS ONE PLOT
+	//===============================================
 
-		// if(i == 0){
-		// 	cans[i]->Print((path+"(").c_str(), "pdf");
-		// }
-		// else if(i == 100){
-		// 	cans[i]->Print((path+")").c_str(), "pdf");
-		// }
-		// else{
+	//loop over canvases for individual xB vs. Q2 bins
+	for(std::vector<std::pair<double, double> >::const_iterator itXB = m_binRangesXB.begin(); 
+		itXB != m_binRangesXB.end(); itXB++){
+		for(std::vector<std::pair<double, double> >::const_iterator itQ2 = m_binRangesQ2.begin(); 
+			itQ2 != m_binRangesQ2.end(); itQ2++){
+			
+			//iterator
+			std::vector<BinTSlope>::const_iterator itBin;
+
+			//look for bin
+			for(itBin = m_bins.begin(); itBin != m_bins.end(); itBin++){
+				if( 
+					itBin->getRangeXB().first == itXB->first && 
+					itBin->getRangeXB().second == itXB->second && 
+					itBin->getRangeQ2().first == itQ2->first && 
+					itBin->getRangeQ2().second == itQ2->second 
+				) break;
+			}
+
+			//check if found
+			if(itBin == m_bins.end()){
+				std::cout << getClassName() << "::" <<__func__ << " error: " << 
+					"not able to find bin" << std::endl;
+				exit(0);
+			}
+
+			//histogram
+		  	TH1* h = itBin->getHTSlope();
+
+			 //check if not empty
+			 if(h != nullptr){
+
+			 	//add canvas
+				cans.push_back(new TCanvas(
+					(HashManager::getInstance()->getHash()).c_str(), ss.str().c_str()));
+
+				//set log-scale
+				cans.back()->SetLogy();
+
+				 //no stats
+				 h->SetStats(0);
+
+				 //draw
+				 h->Draw();
+
+				 //draw associated function
+				 TObject* o = h->GetListOfFunctions()->First();
+
+				 if(o != 0){
+				 	static_cast<TF1*>(o)->Draw("same");
+				 }
+			 }
+		}
+	}
+
+	//===============================================
+	// ONE CANVAS ALL SLOPES
+	//===============================================
+
+	std::vector<std::vector<double> > dataSlopeX;
+	std::vector<std::vector<double> > dataSlopeY;
+	std::vector<std::vector<double> > dataSlopeErrX;
+	std::vector<std::vector<double> > dataSlopeErrY;
+
+	//loop over canvases for individual xB vs. Q2 bins
+	for(std::vector<std::pair<double, double> >::const_iterator itQ2 = m_binRangesQ2.begin(); 
+			itQ2 != m_binRangesQ2.end(); itQ2++){
+
+		//add
+		dataSlopeX.push_back(std::vector<double>());
+		dataSlopeY.push_back(std::vector<double>());
+		dataSlopeErrX.push_back(std::vector<double>());
+		dataSlopeErrY.push_back(std::vector<double>());
+
+		for(std::vector<std::pair<double, double> >::const_iterator itXB = m_binRangesXB.begin(); 
+			itXB != m_binRangesXB.end(); itXB++){
+		
+			//iterator
+			std::vector<BinTSlope>::const_iterator itBin;
+
+			//look for bin
+			for(itBin = m_bins.begin(); itBin != m_bins.end(); itBin++){
+				if( 
+					itBin->getRangeXB().first == itXB->first && 
+					itBin->getRangeXB().second == itXB->second && 
+					itBin->getRangeQ2().first == itQ2->first && 
+					itBin->getRangeQ2().second == itQ2->second 
+				) break;
+			}
+
+			//check if found
+			if(itBin == m_bins.end()){
+				std::cout << getClassName() << "::" <<__func__ << " error: " << 
+					"not able to find bin" << std::endl;
+				exit(0);
+			}
+
+			//get result
+			FitResult* fitResult = itBin->getFitResult();
+
+			//check if not empty
+			if(fitResult == nullptr) continue;
+
+			//add result
+			dataSlopeX.back().push_back(itBin->getMeanXB());
+			dataSlopeY.back().push_back(fitResult->getParameter(1).first);	//slope value
+			dataSlopeErrX.back().push_back(0.);
+			dataSlopeErrY.back().push_back(fitResult->getParameter(1).second);	//slope unc.
+		}
+	}
+
+	//new
+	cans.push_back(new TCanvas(
+			(HashManager::getInstance()->getHash()).c_str(), ss.str().c_str()));
+
+	//set log-scale
+	cans.back()->SetLogx();
+
+	//plot empty histogram that sets ranges
+	TH1* hForGraphs = new TH1D((HashManager::getInstance()->getHash()).c_str(), "", 10, 0.0001, 1.);
+
+ 	//no stats
+ 	hForGraphs->SetStats(0);
+
+ 	//range
+	hForGraphs->SetMinimum(0.);
+	hForGraphs->SetMaximum(10.);
+
+	//draw
+	hForGraphs->Draw();
+
+	//loop
+	for(size_t i = 0; i < dataSlopeX.size(); i++){
+
+		//check if any data
+		if(dataSlopeX.at(i).size() == 0) continue;
+
+		//create
+		TGraphErrors* gr = new TGraphErrors(dataSlopeX.at(i).size(), &(dataSlopeX.at(i)[0]), 
+			&(dataSlopeY.at(i)[0]), &(dataSlopeErrX.at(i)[0]), &(dataSlopeErrY.at(i)[0]));
+
+		//draw
+		gr->Draw("same LP");
+	}
+
+	//===============================================
+	// PRINT
+	//===============================================
+
+	//print
+	for(size_t i = 0; i < cans.size(); i++){
+
+		if(i == 0){
+			cans[i]->Print((path+"(").c_str(), "pdf");
+		}
+		else if(i == cans.size() - 1){
+			cans[i]->Print((path+")").c_str(), "pdf");
+		}
+		else{
 			cans[i]->Print(path.c_str(), "pdf");
-		// }
+		}
 	}
 }
 
@@ -199,7 +358,6 @@ void AnalysisTSlope::initialiseBins(){
 						*itXB, *itQ2, m_nBinsT, std::make_pair(0., 2.)
 					)
 				);
-			
 		}
 	}
 }

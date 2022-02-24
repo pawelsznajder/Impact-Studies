@@ -30,13 +30,16 @@ public:
 	virtual void print() const;
 
 	//analyse
-	virtual FitResult analyse();
+	virtual void analyse();
 
 	//get number of stored events
 	size_t getNEvents() const;
 
 	//get sum of weights
 	double getSumWeights() const;
+
+	//get fit result
+	FitResult* getFitResult() const;
 
 protected:
 
@@ -48,6 +51,8 @@ protected:
 
 	size_t m_nEvents;		//number of stored events
 	double m_sumWeights;	//sum of weights
+
+	FitResult* m_fitResult; //fit result
 };
 
 #endif

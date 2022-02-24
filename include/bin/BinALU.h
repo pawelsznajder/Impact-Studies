@@ -36,7 +36,7 @@ public:
 	virtual void print() const;
 
 	//analyse
-	virtual FitResult analyse();
+	virtual void analyse();
 
 	//get range xB
 	const std::pair<double, double>& getRangeXB() const;
