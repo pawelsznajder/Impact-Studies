@@ -23,7 +23,7 @@ AnalysisTSlope::~AnalysisTSlope(){
 
 void AnalysisTSlope::fill(DVCSEvent& event, double weight){
 
-	if(event.checkSubProcessType(SubProcessType::DVCS) == 0 && event.checkSubProcessType(SubProcessType::BH) == 1) {
+	if(event.checkSubProcessType(SubProcessType::BH) == 1) {
 		weight *= -1.;
 	}
 

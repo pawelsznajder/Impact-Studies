@@ -40,142 +40,197 @@ int main(int argc, char* argv[]){
 		exit(0);
 	}
 
+	//target luminosity (in fb-1)
+	const double targetIntegratedLuminosity = 10;
+
+	std::cout << __func__ << " info: target integrated luminosity: " << 
+		targetIntegratedLuminosity << " [fb-1]" << std::endl;
+
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
 	AnalysisGeneralRC analysisGeneralRC;
 	AnalysisALU analysisALU;
 	AnalysisTSlope analysisTSlope;
 
-	//loop over directories
-	for(size_t i = 1; i < argc; i++){
+	//vectors to store info from files
+	std::vector<std::pair<double, double> > crossSection;
+	std::vector<size_t> nEvents;
+	std::vector<int> beamPolarisation;
+	std::vector<bool> isRCSample;
+	std::vector<int> subProcessTypeMask;
 
-		//check if exists
-		if(! fs::exists(fs::path(argv[i]))){
-			
-			std::cout << __func__ << " warning: directory: " << argv[i] << " does not exist" << std::endl;
-			continue;
-		}
+	double integratedLumiWithBH = 0.;
+	double integratedLumiWithoutBH = 0.;
 
-		//loop over files
-		#ifdef __USE_BOOST__
-			const fs::recursive_directory_iterator end;
-			for(fs::recursive_directory_iterator dirEntry(fs::path(argv[i])); dirEntry != end; dirEntry++){
-		#else
-			for(const auto& dirEntry : fs::recursive_directory_iterator(fs::path(argv[i]))){
-		#endif
-		
-			//skip directories
-			#ifdef __USE_BOOST__
-				 if(! fs::is_regular_file(dirEntry->status())) continue;
-			#else
-				 if(! fs::is_regular_file(dirEntry.status())) continue;
-			#endif
+	//loop (read each files two times)
+	for(size_t loop = 0; loop < 2; loop++){
 
-			//txt
-			#ifdef __USE_BOOST__
-				if(dirEntry->path().extension() == ".txt"){
-			#else
-				if(dirEntry.path().extension() == ".txt"){
-			#endif
+		//file index
+		size_t iFile = 0;
 
-				//get path
-				#ifdef __USE_BOOST__
-					std::string path = dirEntry->path().string();
-				#else
-					std::string path = dirEntry.path().string();
-				#endif
+		//loop over directories
+		for(size_t i = 1; i < argc; i++){
+
+			//check if exists
+			if(! fs::exists(fs::path(argv[i]))){
 				
+				std::cout << __func__ << " warning: directory: " << argv[i] << " does not exist" << std::endl;
+				continue;
+			}
+
+			//loop over files
+			#ifdef __USE_BOOST__
+				const fs::recursive_directory_iterator end;
+				for(fs::recursive_directory_iterator dirEntry(fs::path(argv[i])); dirEntry != end; dirEntry++){
+			#else
+				for(const auto& dirEntry : fs::recursive_directory_iterator(fs::path(argv[i]))){
+			#endif
 			
-				//print
-				std::cout << __func__ << 
-					" info: reading: " << path << std::endl;
+				//skip directories
+				#ifdef __USE_BOOST__
+					 if(! fs::is_regular_file(dirEntry->status())) continue;
+				#else
+					 if(! fs::is_regular_file(dirEntry.status())) continue;
+				#endif
 
-				//variables
-				std::pair<double, double> crossSection;
-				size_t nEvents;
-				int beamPolarisation;
-				bool isRCSample = false;
-				int subProcessTypeMask;
+				//txt
+				#ifdef __USE_BOOST__
+					if(dirEntry->path().extension() == ".txt"){
+				#else
+					if(dirEntry.path().extension() == ".txt"){
+				#endif
 
-				//read to collect atributes ===============
-				{
+					//get path
+					#ifdef __USE_BOOST__
+						std::string path = dirEntry->path().string();
+					#else
+						std::string path = dirEntry.path().string();
+					#endif
+					
+					//print
+					std::cout << __func__ << 
+						" info: reading: " << path << ((loop == 0)?(" (init) "):( " (analyse) ")) << 
+						"index: " << iFile << std::endl;
+
+					//open
 					HepMC3::ReaderAscii inputFile(path);
 
-					//to check if RC sample
-					size_t lastParticleSize = 0;
+					//read to collect atributes ===============
+					if(loop == 0){
 
-					//loop over events
-					for(;;){
+						//to check if RC sample
+						size_t lastParticleSize = 0;
+						bool thisIsRCSample = false;
 
-						//event
-	                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
-	               
-	               		//read
-	          			inputFile.read_event(evt);
+						//loop over events
+						for(;;){
 
-	          			//if the number of particles is not fixed, we have RC sample
-	          			if(evt.particles().size() != 0 && evt.particles().size() != lastParticleSize){
+							//event
+		                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
+		               
+		               		//read
+		          			inputFile.read_event(evt);
 
-	          				if(lastParticleSize == 0){
-	          					lastParticleSize = evt.particles().size();
-	          				}else{
-	          					isRCSample = true;
-	          				}
-	          			}
+		          			//if the number of particles is not fixed, we have RC sample
+		          			if(evt.particles().size() != 0 && evt.particles().size() != lastParticleSize){
 
-	                	//if reading failed - exit loop
-	                	if(inputFile.failed() ) break;
+		          				if(lastParticleSize == 0){
+		          					lastParticleSize = evt.particles().size();
+		          				}else{
+		          					thisIsRCSample = true;
+		          				}
+		          			}
+
+		                	//if reading failed - exit loop
+		                	if(inputFile.failed() ) break;
+						}
+
+						//run info
+						std::shared_ptr<HepMC3::GenRunInfo> runInfo = inputFile.run_info();
+
+						crossSection.push_back(
+							std::make_pair( 
+								std::stod((runInfo->attributes().find("integrated_cross_section_value")->second)->unparsed_string()),
+								std::stod((runInfo->attributes().find("integrated_cross_section_uncertainty")->second)->unparsed_string())
+							)
+						);
+
+						nEvents.push_back(
+							std::stoul((runInfo->attributes().find("generated_events_number")->second)->unparsed_string()));
+
+						beamPolarisation.push_back(
+							std::stoi((runInfo->attributes().find("beam_polarisation")->second)->unparsed_string()));
+
+						subProcessTypeMask.push_back(
+							SubProcessType::getSubProcessTypeMaskFromStdString(
+								(runInfo->attributes().find("suprocesses_type")->second)->unparsed_string())
+						);
+
+						//rc
+						isRCSample.push_back(thisIsRCSample);
+
+						//luminosity
+						if(subProcessTypeMask.back() & SubProcessType::BH){
+							integratedLumiWithBH += nEvents.back() / crossSection.back().first;
+						}else{
+							integratedLumiWithoutBH += nEvents.back() / crossSection.back().first;
+						}
+
+						//print status
+						std::cout << __func__ << " info: atribute: cross-section: " << crossSection.back().first 
+							<< " +/- " << crossSection.back().second << std::endl;
+						std::cout << __func__ << " info: atribute: number of events: " << nEvents.back() << std::endl;
+						std::cout << __func__ << " info: atribute: beam polarisation: " << beamPolarisation.back() << std::endl;
+						std::cout << __func__ << " info: atribute: sub process mask: " << 
+							((subProcessTypeMask.back() & SubProcessType::BH)?("BH "):("")) <<
+							((subProcessTypeMask.back() & SubProcessType::DVCS)?("DVCS "):("")) <<
+							((subProcessTypeMask.back() & SubProcessType::INT)?("INT "):("")) << std::endl;
+						std::cout << __func__ << " info: atribute: RC simulation: " << ((isRCSample.back())?("yes"):("no")) << std::endl;
 					}
 
-					//run info
-					std::shared_ptr<HepMC3::GenRunInfo> runInfo = inputFile.run_info();
+	    			//read to process events ===============
+	    			if(loop == 1){
 
-					crossSection.first = 
-						std::stod((runInfo->attributes().find("integrated_cross_section_value")->second)->unparsed_string());
-					crossSection.second = 
-						std::stod((runInfo->attributes().find("integrated_cross_section_uncertainty")->second)->unparsed_string());
-					nEvents = 
-						std::stoul((runInfo->attributes().find("generated_events_number")->second)->unparsed_string());
-					beamPolarisation = 
-						std::stoi((runInfo->attributes().find("beam_polarisation")->second)->unparsed_string());
-					subProcessTypeMask = SubProcessType::getSubProcessTypeMaskFromStdString(
-						(runInfo->attributes().find("suprocesses_type")->second)->unparsed_string());
+	    				//weight
+	    				double thisWeight;
+
+	    				if(subProcessTypeMask.at(iFile) & SubProcessType::BH){
+	    					thisWeight = targetIntegratedLuminosity / integratedLumiWithBH;
+						}else{
+							thisWeight = targetIntegratedLuminosity / integratedLumiWithoutBH;
+						}
+
+						//loop over events
+						for(;;){
+
+							//event
+		                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
+		               
+		               		//read
+		          			inputFile.read_event(evt);
+
+		                	//if reading failed - exit loop
+		                	if(inputFile.failed() ) break;
+
+		                	//DVCS event 
+		                	//TODO add beam charge and target polarisation
+		               	 	DVCSEvent dvcsEvent(evt, beamPolarisation.at(iFile), -1, TVector3(0., 0., 0.), isRCSample.at(iFile), 
+		               	 		subProcessTypeMask.at(iFile));
+
+		               	 	//fill
+		               	 	analysisGeneral.fill(dvcsEvent, 1.);
+		               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
+		               	 	analysisALU.fill(dvcsEvent, 1.);
+							analysisTSlope.fill(dvcsEvent, thisWeight);
+						}
+	    			}
+
+	    			//file index
+	    			iFile++;
 
 					//close
     				inputFile.close();
 				}
-
-    			//read to process events ===============
-    			{
-					HepMC3::ReaderAscii inputFile(path);
-
-					//loop over events
-					for(;;){
-
-						//event
-	                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
-	               
-	               		//read
-	          			inputFile.read_event(evt);
-
-	                	//if reading failed - exit loop
-	                	if(inputFile.failed() ) break;
-
-	                	//DVCS event 
-	                	//TODO add beam charge and target polarisation
-	               	 	DVCSEvent dvcsEvent(evt, beamPolarisation, -1, TVector3(0., 0., 0.), isRCSample, subProcessTypeMask);
-
-	               	 	//fill
-	               	 	//TODO add weight 
-	               	 	analysisGeneral.fill(dvcsEvent, 1.);
-	               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
-	               	 	analysisALU.fill(dvcsEvent, 1.);
-						analysisTSlope.fill(dvcsEvent, 1.);
-					}
-
-					//close file
-	    			inputFile.close();
-    			}
 			}
 		}
 	}

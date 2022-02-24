@@ -30,7 +30,6 @@ BinTSlope::BinTSlope(
 	m_hDistribution = new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
 					nTBins, rangeT.first, rangeT.second);
 
-
 	//set sumw2
 	m_hDistribution->Sumw2();
 
@@ -72,7 +71,6 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 	//fill
 	m_hDistribution->Fill(-1 * event.getT(), weight);
 	
-
 	//add
 	m_sumXB += weight * event.getXB();
 	m_sumQ2 += weight * event.getQ2();

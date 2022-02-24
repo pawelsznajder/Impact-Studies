@@ -24,12 +24,6 @@ void Bin::reset(){
 
 void Bin::fill(DVCSEvent& event, double weight){
 
-	//check weight
-	if(weight < 0.){
-		std::cout << getClassName() << "::" << __func__ << " warning: " 
-			<< "event weight is negative, " << weight << std::endl;
-	}
-
 	//add
 	m_nEvents++;
 	m_sumWeights += weight;
