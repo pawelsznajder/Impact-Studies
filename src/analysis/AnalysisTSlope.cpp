@@ -184,7 +184,7 @@ void AnalysisTSlope::plot(const std::string& path){
 
 			 	//add canvas
 				cans.push_back(new TCanvas(
-					(HashManager::getInstance()->getHash()).c_str(), ss.str().c_str()));
+					(HashManager::getInstance()->getHash()).c_str(), ""));
 
 				//set log-scale
 				cans.back()->SetLogy();

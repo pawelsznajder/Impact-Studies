@@ -60,7 +60,11 @@ void AnalysisALU::analyse(){
 void AnalysisALU::plot(const std::string& path){
 
 	//canvases
-	std::vector<TCanvas*> cans[2];
+	std::vector<TCanvas*> cans;
+
+	//===============================================
+	// ONE CANVAS ALL PLOTS
+	//===============================================
 
 	//loop
 	for(std::vector<std::pair<double, double> >::const_iterator itT = m_binRangesT.begin(); 
@@ -75,13 +79,13 @@ void AnalysisALU::plot(const std::string& path){
 		for(size_t i = 0; i < 2; i++){
 
 			//new
-			cans[i].push_back(
+			cans.push_back(
 				new TCanvas(
 					(HashManager::getInstance()->getHash()).c_str(), ss.str().c_str())
 			);
 
 			//divide
-			cans[i].back()->Divide(m_binRangesXB.size(), m_binRangesQ2.size());
+			cans.back()->Divide(m_binRangesXB.size(), m_binRangesQ2.size());
 
 			//plot
 			for(std::vector<std::pair<double, double> >::const_iterator itXB = m_binRangesXB.begin(); 
@@ -115,7 +119,7 @@ void AnalysisALU::plot(const std::string& path){
 					if(itBin->getNEvents() == 0) continue;
 
 					//set pad
-					cans[i].back()->cd(1 + 
+					cans.back()->cd(1 + 
 						size_t(itXB - m_binRangesXB.begin()) + 
 						(size_t(m_binRangesQ2.end() - itQ2) - 1) * m_binRangesXB.size() 
 					);
@@ -174,19 +178,112 @@ void AnalysisALU::plot(const std::string& path){
 		}
 	}
 
-	//print
-	for(size_t j = 0; j < cans[0].size(); j++){
-		for(size_t i = 0; i < 2; i++){
+	//===============================================
+	// ONE CANVAS ONE PLOT
+	//===============================================
 
-			if(cans[0].size() > 1 && i == 0 && j == 0){
-				cans[i][j]->Print((path+"(").c_str(), "pdf");
+	for(std::vector<std::pair<double, double> >::const_iterator itT = m_binRangesT.begin(); 
+		itT != m_binRangesT.end(); itT++){
+		for(std::vector<std::pair<double, double> >::const_iterator itXB = m_binRangesXB.begin(); 
+				itXB != m_binRangesXB.end(); itXB++){
+				for(std::vector<std::pair<double, double> >::const_iterator itQ2 = m_binRangesQ2.begin(); 
+					itQ2 != m_binRangesQ2.end(); itQ2++){
+
+				//iterator
+				std::vector<BinALU>::const_iterator itBin;
+
+				//look for bin
+				for(itBin = m_bins.begin(); itBin != m_bins.end(); itBin++){
+					if(
+						itBin->getRangeT().first == itT->first && 
+						itBin->getRangeT().second == itT->second && 
+						itBin->getRangeXB().first == itXB->first && 
+						itBin->getRangeXB().second == itXB->second && 
+						itBin->getRangeQ2().first == itQ2->first && 
+						itBin->getRangeQ2().second == itQ2->second 
+					) break;
+				}
+
+				//check if found
+				if(itBin == m_bins.end()){
+					std::cout << getClassName() << "::" <<__func__ << " error: " << 
+						"not able to find bin" << std::endl;
+					exit(0);
+				}
+
+				//check if not empty
+				if(itBin->getNEvents() == 0) continue;
+
+				//add canvas
+				cans.push_back(new TCanvas(
+					(HashManager::getInstance()->getHash()).c_str(), ""));
+
+				//histograms
+				TH1* h1 = itBin->getHDistributions().first;
+				TH1* h2 = itBin->getHDistributions().second;
+
+				//set minima
+				h1->SetMinimum(0.);
+				h2->SetMinimum(0.);
+
+				//colors
+				h1->SetLineColor(2);
+				h2->SetLineColor(4);
+
+				//no stats
+				h1->SetStats(0);
+				h2->SetStats(0);
+
+				//draw
+				h1->Draw();
+				h2->Draw("same");
+
+				//add canvas
+				cans.push_back(new TCanvas(
+					(HashManager::getInstance()->getHash()).c_str(), ""));
+
+				//histogram
+			 	TH1* h = itBin->getHAsymmetry();
+
+			 	//check if not empty
+			 	if(h != nullptr){
+
+				 	//set minimum and maximum
+				 	h->SetMinimum(-1.);
+				 	h->SetMaximum(1.);
+
+				 	//no stats
+				 	h->SetStats(0);
+
+				 	//draw
+				 	h->Draw();
+
+				 	//draw associated function
+				 	TObject* o = h->GetListOfFunctions()->First();
+
+				 	if(o != 0){
+				 		static_cast<TF1*>(o)->Draw("same");
+				 	}
+			 	}
 			}
-			else if(i == 1 && j == cans[0].size() - 1){
-				cans[i][j]->Print((path+")").c_str(), "pdf");
-			}
-			else{
-				cans[i][j]->Print(path.c_str(), "pdf");
-			}
+		}
+	}
+
+	//===============================================
+	// PRINT
+	//===============================================
+
+	//print
+	for(size_t i = 0; i < cans.size(); i++){
+
+		if(i == 0){
+			cans[i]->Print((path+"(").c_str(), "pdf");
+		}
+		else if(i == cans.size() - 1){
+			cans[i]->Print((path+")").c_str(), "pdf");
+		}
+		else{
+			cans[i]->Print(path.c_str(), "pdf");
 		}
 	}
 }
