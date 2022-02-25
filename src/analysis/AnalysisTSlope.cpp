@@ -3,6 +3,7 @@
 #include <cmath>
 #include <sstream>
 #include <TCanvas.h>
+#include <TLegend.h>
 #include <TGraphErrors.h>
 
 
@@ -213,6 +214,9 @@ void AnalysisTSlope::plot(const std::string& path){
 	std::vector<std::vector<double> > dataSlopeY;
 	std::vector<std::vector<double> > dataSlopeErrX;
 	std::vector<std::vector<double> > dataSlopeErrY;
+	std::vector<string> dataLabels;
+
+	auto legend = new TLegend(0.1,0.7,0.48,0.9);
 
 	//loop over canvases for individual xB vs. Q2 bins
 	for(std::vector<std::pair<double, double> >::const_iterator itQ2 = m_binRangesQ2.begin(); 
@@ -223,6 +227,10 @@ void AnalysisTSlope::plot(const std::string& path){
 		dataSlopeY.push_back(std::vector<double>());
 		dataSlopeErrX.push_back(std::vector<double>());
 		dataSlopeErrY.push_back(std::vector<double>());
+
+		ss.str(std::string());
+		ss << itQ2->first << " < Q2 < " << itQ2->second;
+		dataLabels.push_back(ss.str());
 
 		for(std::vector<std::pair<double, double> >::const_iterator itXB = m_binRangesXB.begin(); 
 			itXB != m_binRangesXB.end(); itXB++){
@@ -292,8 +300,14 @@ void AnalysisTSlope::plot(const std::string& path){
 			&(dataSlopeY.at(i)[0]), &(dataSlopeErrX.at(i)[0]), &(dataSlopeErrY.at(i)[0]));
 
 		//draw
+		gr->SetMarkerStyle(20);
+		gr->SetMarkerColor(1+i);
 		gr->Draw("same LP");
+
+		legend->AddEntry(gr, dataLabels.at(i).c_str(),"lep");
 	}
+	
+	legend->Draw();
 
 	//===============================================
 	// PRINT
@@ -355,7 +369,7 @@ void AnalysisTSlope::initialiseBins(){
 			
 				m_bins.push_back(
 					BinTSlope(
-						*itXB, *itQ2, m_nBinsT, std::make_pair(0., 2.)
+						*itXB, *itQ2, m_nBinsT, std::make_pair(0., 1.5)
 					)
 				);
 		}
