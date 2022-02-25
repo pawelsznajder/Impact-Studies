@@ -1,6 +1,7 @@
 #include "../../include/bin/Bin.h"
 
 #include <iostream>
+#include <limits>
 
 Bin::Bin(const std::string& className) : BaseObject(className), 
 	m_nEvents(0), m_sumWeights(0.), m_fitResult(nullptr){
@@ -37,9 +38,8 @@ double Bin::getMean(double sum, double sumOfWeights) const{
 	//check if zero
 	if(sumOfWeights == 0.){
 
-		std::cout << getClassName() << "::" << __func__ << " error: " << "sum of weight is zero or negative, "
-			<< sumOfWeights << std::endl;
-		exit(0);
+		std::cout << getClassName() << "::" << __func__ << " warning: " << "sum of weight is zero" << std::endl;
+		return std::numeric_limits<double>::quiet_NaN();
 	}
 
 	//return

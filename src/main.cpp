@@ -41,10 +41,13 @@ int main(int argc, char* argv[]){
 	}
 
 	//target luminosity (in fb-1)
-	const double targetIntegratedLuminosity = 10;
+	const double targetIntegratedLuminosityFb = 10;
+
+	//target luminosity (in nb-1)
+	const double targetIntegratedLuminosityNb = targetIntegratedLuminosityFb * 1E6;
 
 	std::cout << __func__ << " info: target integrated luminosity: " << 
-		targetIntegratedLuminosity << " [fb-1]" << std::endl;
+		targetIntegratedLuminosityFb << " [fb-1]" << std::endl;
 
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
@@ -195,9 +198,9 @@ int main(int argc, char* argv[]){
 	    				double thisWeight;
 
 	    				if(subProcessTypeMask.at(iFile) & SubProcessType::BH){
-	    					thisWeight = targetIntegratedLuminosity / integratedLumiWithBH;
+	    					thisWeight = targetIntegratedLuminosityNb / integratedLumiWithBH;
 						}else{
-							thisWeight = targetIntegratedLuminosity / integratedLumiWithoutBH;
+							thisWeight = targetIntegratedLuminosityNb / integratedLumiWithoutBH;
 						}
 
 						//loop over events
