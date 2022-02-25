@@ -35,6 +35,10 @@ BinTSlope::BinTSlope(
 
 	//function for fitting
 	m_fFit = new TF1((HashManager::getInstance()->getHash()).c_str(), "[0]*exp(-1*[1]*x)", 0., 2.);
+
+	m_fFit->SetParameter(0, m_sumWeights);
+	m_fFit->SetParameter(1, 5.);
+
 }
 
 BinTSlope::~BinTSlope(){
@@ -83,12 +87,12 @@ void BinTSlope::analyse(){
 	Bin::analyse();
 
 	//skip bins with low entry
-	if(m_nEvents < 100){
+	if(m_nEvents < 500){
 		return;
 	}
 
 	//skip bins with low summed weights
-	if(m_sumWeights < 100.){
+	if(m_sumWeights < 500.){
 		return;
 	}
 
@@ -98,7 +102,8 @@ void BinTSlope::analyse(){
 	//fit
 	//fit options: 
 	//0: do not attempt to draw function
-	int statusCode = int(m_hTSlope->Fit(m_fFit, "0"));
+
+	int statusCode = int(m_hTSlope->Fit(m_fFit, "0B"));
 
 	//store results
 	if(m_fitResult){
