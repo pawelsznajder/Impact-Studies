@@ -189,6 +189,7 @@ void AnalysisTSlope::plot(const std::string& path){
 
 				//set log-scale
 				cans.back()->SetLogy();
+				cans.back()->SetTitle("|t|");
 
 				 //no stats
 				 h->SetStats(0);
@@ -216,7 +217,7 @@ void AnalysisTSlope::plot(const std::string& path){
 	std::vector<std::vector<double> > dataSlopeErrY;
 	std::vector<string> dataLabels;
 
-	auto legend = new TLegend(0.1,0.7,0.48,0.9);
+	auto legend = new TLegend(0.7,0.7,0.95,0.9);
 
 	//loop over canvases for individual xB vs. Q2 bins
 	for(std::vector<std::pair<double, double> >::const_iterator itQ2 = m_binRangesQ2.begin(); 
@@ -228,8 +229,7 @@ void AnalysisTSlope::plot(const std::string& path){
 		dataSlopeErrX.push_back(std::vector<double>());
 		dataSlopeErrY.push_back(std::vector<double>());
 
-		std::stringstream ss;
-
+		ss.str(std::string());
 		ss << itQ2->first << " < Q2 < " << itQ2->second;
 		dataLabels.push_back(ss.str());
 
@@ -276,6 +276,8 @@ void AnalysisTSlope::plot(const std::string& path){
 
 	//set log-scale
 	cans.back()->SetLogx();
+    	cans.back()->SetTitle("xB");
+	cans.back()->SetTitle("t-slope");
 
 	//plot empty histogram that sets ranges
 	TH1* hForGraphs = new TH1D((HashManager::getInstance()->getHash()).c_str(), "", 10, 0.0001, 1.);
@@ -370,7 +372,7 @@ void AnalysisTSlope::initialiseBins(){
 			
 				m_bins.push_back(
 					BinTSlope(
-						*itXB, *itQ2, m_nBinsT, std::make_pair(0., 1.5)
+						*itXB, *itQ2, m_nBinsT, std::make_pair(0.2, 1.5)
 					)
 				);
 		}
