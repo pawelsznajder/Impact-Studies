@@ -4,6 +4,7 @@
 #include <sstream>
 #include <TCanvas.h>
 #include <TGraph.h>
+#include <TLegend.h>
 
 #include "../../include/other/HashManager.h"
 
@@ -11,6 +12,11 @@ AnalysisGeneralRC::AnalysisGeneralRC() : Analysis("AnalysisGeneralRC"){
 
 	//number of bins 
 	int nbin = 100;
+
+	//set 1D histograms
+	m_hYNORC = new TH1D((HashManager::getInstance()->getHash()).c_str(), "y", nbin, -0.1, 1.1);
+	m_hYRCBorn = new TH1D((HashManager::getInstance()->getHash()).c_str(), "y", nbin, -0.1, 1.1);
+	m_hYRC = new TH1D((HashManager::getInstance()->getHash()).c_str(), "y", nbin, -0.1, 1.1);
 
 	//set 2D histograms
 	m_hXBvsXB = new TH2D((HashManager::getInstance()->getHash()).c_str(), 
@@ -37,7 +43,6 @@ AnalysisGeneralRC::AnalysisGeneralRC() : Analysis("AnalysisGeneralRC"){
 }
 
 AnalysisGeneralRC::~AnalysisGeneralRC(){
-
 	if(m_analyserXB){
 		delete m_analyserXB; m_analyserXB = 0;
 	}
@@ -65,35 +70,59 @@ AnalysisGeneralRC::~AnalysisGeneralRC(){
 
 void AnalysisGeneralRC::fill(DVCSEvent& event, double weight){
 
-	//define variables for 2D histograms
-	double XBb = log10(event.getXB(RCType::Born));
-	double XBrc = log10(event.getXB(RCType::ISR | RCType::FSR));
-	double Q2b = log10(event.getQ2(RCType::Born));
-	double Q2rc = log10(event.getQ2(RCType::ISR | RCType::FSR));
-	double Tb = fabs(event.getT(RCType::Born));
-	double Trc = fabs(event.getT(RCType::ISR | RCType::FSR));
-	double Phib = event.getPhi(RCType::Born);
-	double Phirc = event.getPhi(RCType::ISR | RCType::FSR);
-	double PhiSb = event.getPhiS(RCType::Born);
-	double PhiSrc = event.getPhiS(RCType::ISR | RCType::FSR);
-	double Yb = event.getY(RCType::Born);
-	double Yrc = event.getY(RCType::ISR | RCType::FSR);
-	
-	//fill 2D histograms
-	m_hXBvsXB->Fill(XBb, (XBb-XBrc)/XBb, weight);
-	m_hQ2vsQ2->Fill(Q2b, (Q2b-Q2rc)/Q2b, weight);
-	m_hTvsT->Fill(Tb, (Tb-Trc)/Tb, weight);
-	m_hPhivsPhi->Fill(Phib, (Phib-Phirc)/Phib, weight);
-	m_hPhiSvsPhiS->Fill(PhiSb, (PhiSb-PhiSrc)/PhiSb, weight);
-	m_hYvsY->Fill(Yb, (Yb-Yrc)/Yb, weight);
 
-	//fill analysers
-	m_analyserXB->fill(XBb, (XBb-XBrc)/XBb, weight);
-	m_analyserQ2->fill(Q2b, (Q2b-Q2rc)/Q2b, weight);
-	m_analyserT->fill(Tb, (Tb-Trc)/Tb, weight);
-	m_analyserPhi->fill(Phib, (Phib-Phirc)/Phib, weight);
-	m_analyserPhiS->fill(PhiSb, (PhiSb-PhiSrc)/PhiSb, weight);
-	m_analyserY->fill(Yb, (Yb-Yrc)/Yb, weight);
+	//Born
+	double XBb = log10(event.getXB(KinematicsType::True));
+	double Q2b = log10(event.getQ2(KinematicsType::True));
+	double Tb = fabs(event.getT(KinematicsType::True));
+	double Phib = event.getPhi(KinematicsType::True);
+	double PhiSb = event.getPhiS(KinematicsType::True);
+	double Yb = event.getY(KinematicsType::True);
+
+	if (event.isRCSample()){
+		
+		//RC
+		double XBrc = log10(event.getXB(KinematicsType::Observed));
+		double Q2rc = log10(event.getQ2(KinematicsType::Observed));
+		double Trc = fabs(event.getT(KinematicsType::Observed));
+		double Phirc = event.getPhi(KinematicsType::Observed);
+		double PhiSrc = event.getPhiS(KinematicsType::Observed);
+		double Yrc = event.getY(KinematicsType::Observed);
+
+		//fill 1D histograms
+		m_hYRC->Fill(Yrc, weight);
+		m_hYRCBorn->Fill(Yb, weight);
+
+		//fill 2D histograms
+		m_hXBvsXB->Fill(XBb, (XBb-XBrc)/XBb, weight);
+		m_hQ2vsQ2->Fill(Q2b, (Q2b-Q2rc)/Q2b, weight);
+		m_hTvsT->Fill(Tb, (Tb-Trc)/Tb, weight);
+		m_hPhivsPhi->Fill(Phib, (Phib-Phirc)/Phib, weight);
+		m_hPhiSvsPhiS->Fill(PhiSb, (PhiSb-PhiSrc)/PhiSb, weight);
+		m_hYvsY->Fill(Yb, (Yb-Yrc)/Yb, weight);
+
+		//fill analysers
+		m_analyserXB->fill(XBb, (XBb-XBrc)/XBb, weight);
+		m_analyserQ2->fill(Q2b, (Q2b-Q2rc)/Q2b, weight);
+		m_analyserT->fill(Tb, (Tb-Trc)/Tb, weight);
+		m_analyserPhi->fill(Phib, (Phib-Phirc)/Phib, weight);
+		m_analyserPhiS->fill(PhiSb, (PhiSb-PhiSrc)/PhiSb, weight);
+		m_analyserY->fill(Yb, (Yb-Yrc)/Yb, weight);
+
+	}else{
+
+		//fill 1D histograms
+		m_hYNORC->Fill(Yb, weight);
+
+	}
+	
+	//Clone and make ratio of histograms
+	m_hYRatio[0] = (TH1*)m_hYRC->Clone();
+	m_hYRatio[0]->Divide(m_hYNORC);
+
+	m_hYRatio[1] = (TH1*)m_hYRC->Clone();
+	m_hYRatio[1]->Divide(m_hYRCBorn);
+	
 }
 
 void AnalysisGeneralRC::analyse(){
@@ -106,7 +135,7 @@ void AnalysisGeneralRC::plot(const std::string& path){
 	std::vector<TCanvas*> cans;
 
 	//loop over canvases
-	for(size_t i = 0; i < 2; i++)	{
+	for(size_t i = 0; i < 3; i++)	{
 
 		//add canvas
 		cans.push_back(
@@ -169,6 +198,40 @@ void AnalysisGeneralRC::plot(const std::string& path){
 			cans.back()->cd(6);
 			drawMeanSigmaAnalyserHistogram(m_analyserY->getH());
 		}
+		if(i == 2){
+			
+			cans.back()->cd(1);
+			m_hYNORC->SetStats(0);
+			m_hYNORC->SetLineColor(1);
+			m_hYNORC->SetMinimum(0);
+			m_hYNORC->SetMaximum(0.04);
+			m_hYNORC->Scale(1./m_hYNORC->Integral());
+			m_hYNORC->Draw();
+			m_hYRCBorn->SetLineColor(2);
+			m_hYRCBorn->Scale(1./m_hYRCBorn->Integral());
+			m_hYRCBorn->Draw("same");
+			m_hYRC->SetLineColor(4);
+			m_hYRC->Scale(1./m_hYRC->Integral());
+			m_hYRC->Draw("same");
+			TLegend* leg = new TLegend();
+			leg->SetFillColor(10);
+			leg->SetLineColor(10);
+			leg->SetShadowColor(10);
+			leg->AddEntry(m_hYNORC,"NoRC");
+			leg->AddEntry(m_hYRC,"RC");
+			leg->AddEntry(m_hYRCBorn,"RCBorn");
+			leg->Draw();
+
+			cans.back()->cd(2);
+			m_hYRatio[0]->SetStats(0);
+			m_hYRatio[0]->SetTitle("y_{RC}/y_{NORC}");
+			m_hYRatio[0]->Draw();
+
+			cans.back()->cd(3);
+			m_hYRatio[1]->SetStats(0);
+			m_hYRatio[1]->SetTitle("y_{RC}/y_{RC, Born}");
+			m_hYRatio[1]->Draw();
+		}
 	}
 
 	//print
@@ -199,4 +262,3 @@ void AnalysisGeneralRC::drawMeanSigmaAnalyserHistogram(TH1* h) const{
 			h->Draw("e");
 			g->Draw("same");
 }
-

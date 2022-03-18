@@ -32,6 +32,12 @@ public:
 
 private:
 
+	//1D histograms
+	TH1* m_hYNORC;
+	TH1* m_hYRCBorn;
+	TH1* m_hYRC;
+	TH1* m_hYRatio[2];
+
 	//2D histograms
 	TH2* m_hXBvsXB;
 	TH2* m_hQ2vsQ2;

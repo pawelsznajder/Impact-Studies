@@ -6,6 +6,8 @@
 
 #include "../../include/other/BaseObject.h"
 #include "../../include/other/RCType.h"
+#include "../../include/other/KinematicsType.h"
+
 
 using namespace HepMC3;
 
@@ -24,31 +26,37 @@ public:
         virtual ~DVCSEvent();
 
         //get xB
-        double getXB(int rc = (RCType::ISR | RCType::FSR));
+        double getXB(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get t
-        double getT(int rc = (RCType::ISR | RCType::FSR));
+        double getT(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get Q2
-        double getQ2(int rc = (RCType::ISR | RCType::FSR));
+        double getQ2(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get y
-        double getY(int rc = (RCType::ISR | RCType::FSR));
+        double getY(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get phi
-        double getPhi(int rc = (RCType::ISR | RCType::FSR));
+        double getPhi(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get phiS
-        double getPhiS(int rc = (RCType::ISR | RCType::FSR));
+        double getPhiS(KinematicsType::Type type = KinematicsType::Observed) const;
         
 	//get pseudo-rapidity of outgoing electron
-        double getEtaEOut(int rc = (RCType::ISR | RCType::FSR));
+        double getEtaEOut(KinematicsType::Type type = KinematicsType::Observed) const;
 
 	//get pseudo-rapidity of outgoing proton
-        double getEtaPOut(int rc = (RCType::ISR | RCType::FSR));
+        double getEtaPOut(KinematicsType::Type type = KinematicsType::Observed) const;
 
 	//get pseudo-rapidity of outgoing photon
-        double getEtaGOut(int rc = (RCType::ISR | RCType::FSR));
+        double getEtaGOut(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get energy of radiative photon of given type
+        double getEGammaRC(RCType::Type type) const;
+
+        //get pseudo-rapidity of radiative photon of given type
+        double getEtaGammaRC(RCType::Type type) const;
 
         //get beam polarisation
         int getBeamPolarisation() const;
@@ -79,44 +87,44 @@ private:
         TLorentzVector makeTLorentzVector(const ConstGenParticlePtr& constGenParticlePtr) const;
 
         //find four-momentum of beam electron in HepMC3 event 
-        std::map<RCType::Type, TLorentzVector> getEIn(const GenEvent& evt) const;
+        std::pair<TLorentzVector, TLorentzVector> getEIn(const GenEvent& evt) const;
 
         //find four-momentum of outgoing electron in HepMC3 event 
-        std::map<RCType::Type, TLorentzVector> getEOut(const GenEvent& evt) const;
+        std::pair<TLorentzVector, TLorentzVector> getEOut(const GenEvent& evt) const;
 
         //find four-momentum of beam proton in HepMC3 event 
-        std::map<RCType::Type, TLorentzVector> getPIn(const GenEvent& evt) const;
+        std::pair<TLorentzVector, TLorentzVector> getPIn(const GenEvent& evt) const;
 
         //find four-momentum of outgoing proton in HepMC3 event 
-        std::map<RCType::Type, TLorentzVector> getPOut(const GenEvent& evt) const;
+        std::pair<TLorentzVector, TLorentzVector> getPOut(const GenEvent& evt) const;
 
         //find four-momentum of DVCS photon in HepMC3 event 
-        std::map<RCType::Type, TLorentzVector> getGammaOut(const GenEvent& evt) const;
+        std::pair<TLorentzVector, TLorentzVector> getGammaOut(const GenEvent& evt) const;
 
-        //rc mask (indicated which types of RCs one observes in this event)
-        int m_rcTypeMask;
+        //evaluate four-momentum of virtual photon
+        std::pair<TLorentzVector, TLorentzVector> getGammaStar() const;
 
+        //find four-momenta of RC photons in HepMC3 event 
+        std::map<RCType::Type, TLorentzVector> getGammaRC(const GenEvent& evt) const;
+
+        //set four-momentum in a pair for specific kinematic type
+        void setFourMomentum(std::pair<TLorentzVector, TLorentzVector>& inputPair, KinematicsType::Type type, const TLorentzVector& mom) const;
+
+        //get reference of four-momentum corresponding to specific kinematic type
+        const TLorentzVector& getFourMomentum(const std::pair<TLorentzVector, TLorentzVector>& inputPair, KinematicsType::Type type) const;
+
+        //print error message and terminate program if processing of events is not successful 
+        void printError(const std::string& functionName) const;
+   
         //four-momenta
-        std::map<RCType::Type, TLorentzVector> m_eIn;
-        std::map<RCType::Type, TLorentzVector> m_eOut;
-        std::map<RCType::Type, TLorentzVector> m_pIn;
-        std::map<RCType::Type, TLorentzVector> m_pOut;
-        std::map<RCType::Type, TLorentzVector> m_gammaOut;
+        std::pair<TLorentzVector, TLorentzVector> m_eIn;
+        std::pair<TLorentzVector, TLorentzVector> m_eOut;
+        std::pair<TLorentzVector, TLorentzVector> m_pIn;
+        std::pair<TLorentzVector, TLorentzVector> m_pOut;
+        std::pair<TLorentzVector, TLorentzVector> m_gammaOut;
+        std::pair<TLorentzVector, TLorentzVector> m_gammaStar;
 
-        //this flag is used to avoid loading four-momenta for each evaluation of kinematic variables
-        int m_this_rc;
-
-        //load four-momenta for evaluation of kinematic variables
-        void loadThisRC(int rc);
-
-        //four-momenta for evaluation of kinematic variables
-        TLorentzVector m_this_rc_eIn;
-        TLorentzVector m_this_rc_eOut;
-        TLorentzVector m_this_rc_pIn;
-        TLorentzVector m_this_rc_pOut;
-        TLorentzVector m_this_rc_gammaOut;
-
-        TLorentzVector m_this_rc_gammaStar;
+        std::map<RCType::Type, TLorentzVector> m_gammaRC;
 
         //beam polarisation
         int m_beamPolarisation;
@@ -129,6 +137,9 @@ private:
 
         //true if from sample including RCs
         bool m_isRCSample;
+
+        //rc mask (indicated which types of RCs one observes in this event)
+        int m_rcTypeMask;
 
         //subrpocess mask
         int m_subProcessTypeMask;

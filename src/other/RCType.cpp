@@ -2,8 +2,7 @@
 
 RCType::RCType()
     : BaseObject("RCType"), m_type(RCType::UNDEFINED) {
-
-    }
+}
 
 RCType::RCType(Type type) : BaseObject("RCType"), m_type(type) {
 
