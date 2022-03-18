@@ -228,11 +228,8 @@ void AnalysisTSlope::plot(const std::string& path){
 		dataSlopeErrX.push_back(std::vector<double>());
 		dataSlopeErrY.push_back(std::vector<double>());
 
-<<<<<<< HEAD
-		ss.str(std::string());
-=======
 		std::stringstream ss;
->>>>>>> b83ff0b (xx)
+
 		ss << itQ2->first << " < Q2 < " << itQ2->second;
 		dataLabels.push_back(ss.str());
 
