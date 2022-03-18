@@ -87,12 +87,12 @@ void BinTSlope::analyse(){
 	Bin::analyse();
 
 	//skip bins with low entry
-	if(m_nEvents < 500){
+	if(m_nEvents < 2000){
 		return;
 	}
 
 	//skip bins with low summed weights
-	if(m_sumWeights < 500.){
+	if(m_sumWeights < 2000){
 		return;
 	}
 
@@ -104,6 +104,7 @@ void BinTSlope::analyse(){
 	//0: do not attempt to draw function
 
 	int statusCode = int(m_hTSlope->Fit(m_fFit, "0B"));
+	//int statusCode = int(m_hTSlope->Fit(m_fFit, "I"));
 
 	//store results
 	if(m_fitResult){
