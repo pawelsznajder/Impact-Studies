@@ -4,6 +4,7 @@
 #include <HepMC3/ReaderAscii.h>
 
 #include "../include/analysis/AnalysisGeneral.h"
+#include "../include/analysis/AnalysisEpIC.h"
 #include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
@@ -51,6 +52,7 @@ int main(int argc, char* argv[]){
 
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
+	AnalysisEpIC analysisEpIC;
 	AnalysisGeneralRC analysisGeneralRC;
 	AnalysisALU analysisALU;
 	AnalysisTSlope analysisTSlope;
@@ -62,8 +64,8 @@ int main(int argc, char* argv[]){
 	std::vector<bool> isRCSample;
 	std::vector<int> subProcessTypeMask;
 
-	double integratedLumiWithBH = 0.;
-	double integratedLumiWithoutBH = 0.;
+	double integratedLumiWithDVCS = 0.;
+	double integratedLumiWithoutDVCS = 0.;
 
 	//loop (read each files two times)
 	for(size_t loop = 0; loop < 2; loop++){
@@ -173,11 +175,12 @@ int main(int argc, char* argv[]){
 						isRCSample.push_back(thisIsRCSample);
 
 						//luminosity
-						if(subProcessTypeMask.back() & SubProcessType::BH){
-							integratedLumiWithBH += nEvents.back() / crossSection.back().first;
+						if(subProcessTypeMask.back() & SubProcessType::DVCS){
+							integratedLumiWithDVCS += nEvents.back() / crossSection.back().first;
 						}else{
-							integratedLumiWithoutBH += nEvents.back() / crossSection.back().first;
+							integratedLumiWithoutDVCS += nEvents.back() / crossSection.back().first;
 						}
+
 
 						//print status
 						std::cout << __func__ << " info: atribute: cross-section: " << crossSection.back().first 
@@ -197,10 +200,10 @@ int main(int argc, char* argv[]){
 	    				//weight
 	    				double thisWeight;
 
-	    				if(subProcessTypeMask.at(iFile) & SubProcessType::BH){
-	    					thisWeight = targetIntegratedLuminosityNb / integratedLumiWithBH;
+	    				if(subProcessTypeMask.at(iFile) & SubProcessType::DVCS){
+	    					thisWeight = targetIntegratedLuminosityNb / integratedLumiWithDVCS;
 						}else{
-							thisWeight = targetIntegratedLuminosityNb / integratedLumiWithoutBH;
+							thisWeight = targetIntegratedLuminosityNb / integratedLumiWithoutDVCS;
 						}
 
 						//loop over events
@@ -222,6 +225,7 @@ int main(int argc, char* argv[]){
 
 		               	 	//fill
 		               	 	analysisGeneral.fill(dvcsEvent, 1.);
+					analysisEpIC.fill(dvcsEvent, 1.);
 		               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
 		               	 	analysisALU.fill(dvcsEvent, 1.);
 							analysisTSlope.fill(dvcsEvent, thisWeight);
@@ -240,12 +244,14 @@ int main(int argc, char* argv[]){
    
 	//analyse
 	analysisGeneral.analyse();
+	analysisEpIC.analyse();
 	analysisGeneralRC.analyse();
 	analysisALU.analyse();
 	analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
+	analysisEpIC.plot("analysisEpIC.pdf");
 	analysisGeneralRC.plot("analysisGeneralRC.pdf");
 	analysisALU.plot("analysisALU.pdf");
 	analysisTSlope.plot("analysisTSlope.pdf");
