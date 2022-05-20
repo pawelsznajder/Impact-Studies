@@ -1,10 +1,11 @@
 #include <cmath>
 #include <iostream>
 #include <cstdlib>
+#include <regex>
 #include <HepMC3/ReaderAscii.h>
 
 #include "../include/analysis/AnalysisGeneral.h"
-#include "../include/analysis/AnalysisEpIC.h"
+//#include "../include/analysis/AnalysisEpIC.h"
 #include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
@@ -52,7 +53,7 @@ int main(int argc, char* argv[]){
 
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
-	AnalysisEpIC analysisEpIC;
+//	AnalysisEpIC analysisEpIC;
 	AnalysisGeneralRC analysisGeneralRC;
 	AnalysisALU analysisALU;
 	AnalysisTSlope analysisTSlope;
@@ -100,158 +101,174 @@ int main(int argc, char* argv[]){
 
 				//txt
 				#ifdef __USE_BOOST__
-					if(dirEntry->path().extension() == ".txt"){
+					if(dirEntry->path().extension() != ".txt") continue;
 				#else
-					if(dirEntry.path().extension() == ".txt"){
+					if(dirEntry.path().extension() != ".txt") continue;
 				#endif
 
-					//get path
-					#ifdef __USE_BOOST__
-						std::string path = dirEntry->path().string();
-					#else
-						std::string path = dirEntry.path().string();
-					#endif
-					
-					//print
-					std::cout << __func__ << 
-						" info: reading: " << path << ((loop == 0)?(" (init) "):( " (analyse) ")) << 
-						"index: " << iFile << std::endl;
+				//get path
+				#ifdef __USE_BOOST__
+					std::string path = dirEntry->path().string();
+				#else
+					std::string path = dirEntry.path().string();
+				#endif
 
-					//open
-					HepMC3::ReaderAscii inputFile(path);
+				//skip those with extension ".reconstructed.txt"
+				if(std::regex_search(path, std::regex("\\.reconstructed\\.txt$"))) continue;
 
-					//read to collect atributes ===============
-					if(loop == 0){
+				//check if ".reconstructed.txt" exists
+				std::string pathRec = std::regex_replace(path, std::regex("\\.txt$"), ".reconstructed.txt");
+				
+				if(! fs::exists(pathRec)){
 
-						//to check if RC sample
-						size_t lastParticleSize = 0;
-						bool thisIsRCSample = false;
+					std::cout << __func__ << " error: file " << pathRec << " does not exist" << std::endl;
+					exit(0);
+				}
 
-						//loop over events
-						for(;;){
+				//print
+				std::cout << __func__ << 
+					" info: reading: " << path << " and " << pathRec << ((loop == 0)?(" (init) "):( " (analyse) ")) << 
+					"index: " << iFile << std::endl;
 
-							//event
-		                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
-		               
-		               		//read
-		          			inputFile.read_event(evt);
+				//open
+				HepMC3::ReaderAscii inputFile(path);
+				HepMC3::ReaderAscii inputFileRec(pathRec);
 
-		          			//if the number of particles is not fixed, we have RC sample
-		          			if(evt.particles().size() != 0 && evt.particles().size() != lastParticleSize){
+				//read to collect atributes ===============
+				if(loop == 0){
 
-		          				if(lastParticleSize == 0){
-		          					lastParticleSize = evt.particles().size();
-		          				}else{
-		          					thisIsRCSample = true;
-		          				}
-		          			}
+					//to check if RC sample
+					size_t lastParticleSize = 0;
+					bool thisIsRCSample = false;
 
-		                	//if reading failed - exit loop
-		                	if(inputFile.failed() ) break;
-						}
+					//loop over events
+					for(;;){
 
-						//run info
-						std::shared_ptr<HepMC3::GenRunInfo> runInfo = inputFile.run_info();
+						//event
+	                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
+	               
+	               		//read
+	          			inputFile.read_event(evt);
 
-						crossSection.push_back(
-							std::make_pair( 
-								std::stod((runInfo->attributes().find("integrated_cross_section_value")->second)->unparsed_string()),
-								std::stod((runInfo->attributes().find("integrated_cross_section_uncertainty")->second)->unparsed_string())
-							)
-						);
+	          			//if the number of particles is not fixed, we have RC sample
+	          			if(evt.particles().size() != 0 && evt.particles().size() != lastParticleSize){
 
-						nEvents.push_back(
-							std::stoul((runInfo->attributes().find("generated_events_number")->second)->unparsed_string()));
+	          				if(lastParticleSize == 0){
+	          					lastParticleSize = evt.particles().size();
+	          				}else{
+	          					thisIsRCSample = true;
+	          				}
+	          			}
 
-						beamPolarisation.push_back(
-							std::stoi((runInfo->attributes().find("beam_polarisation")->second)->unparsed_string()));
-
-						subProcessTypeMask.push_back(
-							SubProcessType::getSubProcessTypeMaskFromStdString(
-								(runInfo->attributes().find("suprocesses_type")->second)->unparsed_string())
-						);
-
-						//rc
-						isRCSample.push_back(thisIsRCSample);
-
-						//luminosity
-						if(subProcessTypeMask.back() & SubProcessType::DVCS){
-							integratedLumiWithDVCS += nEvents.back() / crossSection.back().first;
-						}else{
-							integratedLumiWithoutDVCS += nEvents.back() / crossSection.back().first;
-						}
-
-
-						//print status
-						std::cout << __func__ << " info: atribute: cross-section: " << crossSection.back().first 
-							<< " +/- " << crossSection.back().second << std::endl;
-						std::cout << __func__ << " info: atribute: number of events: " << nEvents.back() << std::endl;
-						std::cout << __func__ << " info: atribute: beam polarisation: " << beamPolarisation.back() << std::endl;
-						std::cout << __func__ << " info: atribute: sub process mask: " << 
-							((subProcessTypeMask.back() & SubProcessType::BH)?("BH "):("")) <<
-							((subProcessTypeMask.back() & SubProcessType::DVCS)?("DVCS "):("")) <<
-							((subProcessTypeMask.back() & SubProcessType::INT)?("INT "):("")) << std::endl;
-						std::cout << __func__ << " info: atribute: RC simulation: " << ((isRCSample.back())?("yes"):("no")) << std::endl;
+	                	//if reading failed - exit loop
+	                	if(inputFile.failed() ) break;
 					}
 
-	    			//read to process events ===============
-	    			if(loop == 1){
+					//run info
+					std::shared_ptr<HepMC3::GenRunInfo> runInfo = inputFile.run_info();
 
-	    				//weight
-	    				double thisWeight;
+					crossSection.push_back(
+						std::make_pair( 
+							std::stod((runInfo->attributes().find("integrated_cross_section_value")->second)->unparsed_string()),
+							std::stod((runInfo->attributes().find("integrated_cross_section_uncertainty")->second)->unparsed_string())
+						)
+					);
 
-	    				if(subProcessTypeMask.at(iFile) & SubProcessType::DVCS){
-	    					thisWeight = targetIntegratedLuminosityNb / integratedLumiWithDVCS;
-						}else{
-							thisWeight = targetIntegratedLuminosityNb / integratedLumiWithoutDVCS;
-						}
+					nEvents.push_back(
+						std::stoul((runInfo->attributes().find("generated_events_number")->second)->unparsed_string()));
 
-						//loop over events
-						for(;;){
+					beamPolarisation.push_back(
+						std::stoi((runInfo->attributes().find("beam_polarisation")->second)->unparsed_string()));
 
-							//event
-		                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
-		               
-		               		//read
-		          			inputFile.read_event(evt);
+					subProcessTypeMask.push_back(
+						SubProcessType::getSubProcessTypeMaskFromStdString(
+							(runInfo->attributes().find("suprocesses_type")->second)->unparsed_string())
+					);
 
-		                	//if reading failed - exit loop
-		                	if(inputFile.failed() ) break;
+					//rc
+					isRCSample.push_back(thisIsRCSample);
 
-		                	//DVCS event 
-		                	//TODO add beam charge and target polarisation
-		               	 	DVCSEvent dvcsEvent(evt, beamPolarisation.at(iFile), -1, TVector3(0., 0., 0.), isRCSample.at(iFile), 
-		               	 		subProcessTypeMask.at(iFile));
+					//luminosity
+					if(subProcessTypeMask.back() & SubProcessType::DVCS){
+						integratedLumiWithDVCS += nEvents.back() / crossSection.back().first;
+					}else{
+						integratedLumiWithoutDVCS += nEvents.back() / crossSection.back().first;
+					}
 
-		               	 	//fill
-		               	 	analysisGeneral.fill(dvcsEvent, 1.);
-					analysisEpIC.fill(dvcsEvent, 1.);
-		               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
-		               	 	analysisALU.fill(dvcsEvent, 1.);
-							analysisTSlope.fill(dvcsEvent, thisWeight);
-						}
-	    			}
 
-	    			//file index
-	    			iFile++;
-
-					//close
-    				inputFile.close();
+					//print status
+					std::cout << __func__ << " info: atribute: cross-section: " << crossSection.back().first 
+						<< " +/- " << crossSection.back().second << std::endl;
+					std::cout << __func__ << " info: atribute: number of events: " << nEvents.back() << std::endl;
+					std::cout << __func__ << " info: atribute: beam polarisation: " << beamPolarisation.back() << std::endl;
+					std::cout << __func__ << " info: atribute: sub process mask: " << 
+						((subProcessTypeMask.back() & SubProcessType::BH)?("BH "):("")) <<
+						((subProcessTypeMask.back() & SubProcessType::DVCS)?("DVCS "):("")) <<
+						((subProcessTypeMask.back() & SubProcessType::INT)?("INT "):("")) << std::endl;
+					std::cout << __func__ << " info: atribute: RC simulation: " << ((isRCSample.back())?("yes"):("no")) << std::endl;
 				}
+
+    			//read to process events ===============
+    			if(loop == 1){
+
+    				//weight
+    				double thisWeight;
+
+    				if(subProcessTypeMask.at(iFile) & SubProcessType::DVCS){
+    					thisWeight = targetIntegratedLuminosityNb / integratedLumiWithDVCS;
+					}else{
+						thisWeight = targetIntegratedLuminosityNb / integratedLumiWithoutDVCS;
+					}
+
+					//loop over events
+					for(;;){
+
+						//event
+	                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
+	                	HepMC3::GenEvent evtRec(Units::GEV,Units::MM);
+	               
+	               		//read
+	          			inputFile.read_event(evt);
+	          			inputFileRec.read_event(evtRec);
+
+	                	//if reading failed - exit loop
+	                	if(inputFile.failed() ) break;
+	                	if(inputFileRec.failed() ) break;
+
+	                	//DVCS event 
+	                	//TODO add beam charge and target polarisation
+	               	 	DVCSEvent dvcsEvent(evt, evtRec, beamPolarisation.at(iFile), -1, TVector3(0., 0., 0.), isRCSample.at(iFile), 
+	               	 		subProcessTypeMask.at(iFile));
+
+	               	 	//fill
+	               	 	analysisGeneral.fill(dvcsEvent, 1.);
+						// analysisEpIC.fill(dvcsEvent, 1.);
+	               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
+	               	 	analysisALU.fill(dvcsEvent, 1.);
+						analysisTSlope.fill(dvcsEvent, thisWeight);
+					}
+    			}
+
+    			//file index
+    			iFile++;
+
+				//close
+				inputFile.close();
+				inputFileRec.close();
 			}
 		}
 	}
    
 	//analyse
 	analysisGeneral.analyse();
-	analysisEpIC.analyse();
+	//analysisEpIC.analyse();
 	analysisGeneralRC.analyse();
 	analysisALU.analyse();
 	analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
-	analysisEpIC.plot("analysisEpIC.pdf");
+	//analysisEpIC.plot("analysisEpIC.pdf");
 	analysisGeneralRC.plot("analysisGeneralRC.pdf");
 	analysisALU.plot("analysisALU.pdf");
 	analysisTSlope.plot("analysisTSlope.pdf");

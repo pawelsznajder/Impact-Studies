@@ -19,7 +19,7 @@ class DVCSEvent : public BaseObject{
 public:
 
         //constructor
-        DVCSEvent(const GenEvent& evt, int beamPolarisation, int beamCharge,
+        DVCSEvent(const GenEvent& evtGen, const GenEvent& evtRec, int beamPolarisation, int beamCharge,
                 const TVector3& targetPolarisation, bool isRCSample, int subProcessTypeMask);
 
         //destructor
@@ -52,11 +52,17 @@ public:
 	//get pseudo-rapidity of outgoing photon
         double getEtaGOut(KinematicsType::Type type = KinematicsType::Observed) const;
 
-        //get energy of radiative photon of given type
-        double getEGammaRC(RCType::Type type) const;
+        //get energy of ISR photon 
+        double getEGISR(KinematicsType::Type type = KinematicsType::Observed) const;
 
-        //get pseudo-rapidity of radiative photon of given type
-        double getEtaGammaRC(RCType::Type type) const;
+        //get energy of FSR photon 
+        double getEGFSR(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get pseudo-rapidity of ISR photon 
+        double getEtaGISR(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get pseudo-rapidity of FSR photon 
+        double getEtaGFSR(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get beam polarisation
         int getBeamPolarisation() const;
@@ -76,6 +82,9 @@ public:
         //check subprocess
         bool checkSubProcessType(int subProcessTypeMask) const;
 
+        //check if reconstructed
+        bool isReconstructed() const;
+
 private:
 
         //get phi (mode = 0) or phiS (mode = 1) angle
@@ -87,25 +96,25 @@ private:
         TLorentzVector makeTLorentzVector(const ConstGenParticlePtr& constGenParticlePtr) const;
 
         //find four-momentum of beam electron in HepMC3 event 
-        std::pair<TLorentzVector, TLorentzVector> getEIn(const GenEvent& evt) const;
+        TLorentzVector getEIn(const GenEvent& evt, KinematicsType::Type type) const;
 
         //find four-momentum of outgoing electron in HepMC3 event 
-        std::pair<TLorentzVector, TLorentzVector> getEOut(const GenEvent& evt) const;
+        TLorentzVector getEOut(const GenEvent& evt, KinematicsType::Type type) const;
 
         //find four-momentum of beam proton in HepMC3 event 
-        std::pair<TLorentzVector, TLorentzVector> getPIn(const GenEvent& evt) const;
+        TLorentzVector getPIn(const GenEvent& evt, KinematicsType::Type type) const;
 
         //find four-momentum of outgoing proton in HepMC3 event 
-        std::pair<TLorentzVector, TLorentzVector> getPOut(const GenEvent& evt) const;
+        TLorentzVector getPOut(const GenEvent& evt, KinematicsType::Type type) const;
 
         //find four-momentum of DVCS photon in HepMC3 event 
-        std::pair<TLorentzVector, TLorentzVector> getGammaOut(const GenEvent& evt) const;
+        TLorentzVector getGammaOut(const GenEvent& evt, KinematicsType::Type type) const;
 
-        //evaluate four-momentum of virtual photon
-        std::pair<TLorentzVector, TLorentzVector> getGammaStar() const;
+        //find four-momenta of ISR photons in HepMC3 event 
+        TLorentzVector getGammaISR(const GenEvent& evt, KinematicsType::Type type) const;
 
-        //find four-momenta of RC photons in HepMC3 event 
-        std::map<RCType::Type, TLorentzVector> getGammaRC(const GenEvent& evt) const;
+        //find four-momenta of FSR photons in HepMC3 event 
+        TLorentzVector getGammaFSR(const GenEvent& evt, KinematicsType::Type type) const;
 
         //set four-momentum in a pair for specific kinematic type
         void setFourMomentum(std::pair<TLorentzVector, TLorentzVector>& inputPair, KinematicsType::Type type, const TLorentzVector& mom) const;
@@ -115,6 +124,9 @@ private:
 
         //print error message and terminate program if processing of events is not successful 
         void printError(const std::string& functionName) const;
+
+        //check if reconstructed and improve information
+        bool improveReconstruction(std::pair<TLorentzVector, TLorentzVector>& lvs, double mass) const;
    
         //four-momenta
         std::pair<TLorentzVector, TLorentzVector> m_eIn;
@@ -122,9 +134,11 @@ private:
         std::pair<TLorentzVector, TLorentzVector> m_pIn;
         std::pair<TLorentzVector, TLorentzVector> m_pOut;
         std::pair<TLorentzVector, TLorentzVector> m_gammaOut;
+
         std::pair<TLorentzVector, TLorentzVector> m_gammaStar;
 
-        std::map<RCType::Type, TLorentzVector> m_gammaRC;
+        std::pair<TLorentzVector, TLorentzVector> m_gammaISR;
+        std::pair<TLorentzVector, TLorentzVector> m_gammaFSR;
 
         //beam polarisation
         int m_beamPolarisation;
@@ -143,6 +157,9 @@ private:
 
         //subrpocess mask
         int m_subProcessTypeMask;
+
+        //true is all basic particles are reconstructed (i.e. event reconstructed passes topology selections)
+        bool m_isReconstructed;
 };
 
 #endif
