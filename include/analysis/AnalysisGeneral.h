@@ -35,14 +35,14 @@ private:
 	TH2* m_hXBvsQ2;
 
 	//1D histograms
-	TH1* m_hXB;
-	TH1* m_hQ2;
-	TH1* m_hT;
-	TH1* m_hPhi;
-	TH1* m_hPhiS;
-	TH1* m_hY;
-	TH1* m_hEtaEOut;
-	TH1* m_hEtaPOut;
-	TH1* m_hEtaGOut;
+	TH1* m_hXB[2];
+	TH1* m_hQ2[2];
+	TH1* m_hT[2];
+	TH1* m_hPhi[2];
+	TH1* m_hPhiS[2];
+	TH1* m_hY[2];
+	TH1* m_hEtaEOut[2];
+	TH1* m_hEtaPOut[2];
+	TH1* m_hEtaGOut[2];
 };
 #endif

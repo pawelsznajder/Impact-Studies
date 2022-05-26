@@ -54,9 +54,9 @@ int main(int argc, char* argv[]){
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
 //	AnalysisEpIC analysisEpIC;
-	AnalysisGeneralRC analysisGeneralRC;
-	AnalysisALU analysisALU;
-	AnalysisTSlope analysisTSlope;
+	// AnalysisGeneralRC analysisGeneralRC;
+	// AnalysisALU analysisALU;
+	// AnalysisTSlope analysisTSlope;
 
 	//vectors to store info from files
 	std::vector<std::pair<double, double> > crossSection;
@@ -195,7 +195,6 @@ int main(int argc, char* argv[]){
 						integratedLumiWithoutDVCS += nEvents.back() / crossSection.back().first;
 					}
 
-
 					//print status
 					std::cout << __func__ << " info: atribute: cross-section: " << crossSection.back().first 
 						<< " +/- " << crossSection.back().second << std::endl;
@@ -220,8 +219,14 @@ int main(int argc, char* argv[]){
 						thisWeight = targetIntegratedLuminosityNb / integratedLumiWithoutDVCS;
 					}
 
+					//counter
+					size_t iEvent = 0;
+
 					//loop over events
 					for(;;){
+
+						//info
+						if(iEvent%10000 == 0) std::cout << __func__ << " info: process event number: " << iEvent << std::endl;
 
 						//event
 	                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
@@ -243,9 +248,12 @@ int main(int argc, char* argv[]){
 	               	 	//fill
 	               	 	analysisGeneral.fill(dvcsEvent, 1.);
 						// analysisEpIC.fill(dvcsEvent, 1.);
-	               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
-	               	 	analysisALU.fill(dvcsEvent, 1.);
-						analysisTSlope.fill(dvcsEvent, thisWeight);
+	     //           	 	analysisGeneralRC.fill(dvcsEvent, 1.);
+	     //           	 	analysisALU.fill(dvcsEvent, 1.);
+						// analysisTSlope.fill(dvcsEvent, thisWeight);
+					
+						//counter
+	               	 	iEvent++;
 					}
     			}
 
@@ -262,16 +270,16 @@ int main(int argc, char* argv[]){
 	//analyse
 	analysisGeneral.analyse();
 	//analysisEpIC.analyse();
-	analysisGeneralRC.analyse();
-	analysisALU.analyse();
-	analysisTSlope.analyse();
+	// analysisGeneralRC.analyse();
+	// analysisALU.analyse();
+	// analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
 	//analysisEpIC.plot("analysisEpIC.pdf");
-	analysisGeneralRC.plot("analysisGeneralRC.pdf");
-	analysisALU.plot("analysisALU.pdf");
-	analysisTSlope.plot("analysisTSlope.pdf");
+	// analysisGeneralRC.plot("analysisGeneralRC.pdf");
+	// analysisALU.plot("analysisALU.pdf");
+	// analysisTSlope.plot("analysisTSlope.pdf");
 
 	return 0;
 }

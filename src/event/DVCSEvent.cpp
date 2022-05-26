@@ -14,20 +14,21 @@ DVCSEvent::DVCSEvent(const GenEvent& evtGen, const GenEvent& evtRec, int beamPol
         for(size_t i = 0; i < 2; i++){
 
                 KinematicsType::Type type = (i == 0)?(KinematicsType::True):(KinematicsType::Observed);
+                const GenEvent& evt = (i == 0)?(evtGen):(evtRec);
 
-                setFourMomentum(m_eIn, type, getEIn(evtGen, type));
-                setFourMomentum(m_eOut, type, getEOut(evtGen, type));
-                setFourMomentum(m_pIn, type, getPIn(evtGen, type));
-                setFourMomentum(m_pOut, type, getPOut(evtGen, type));
-                setFourMomentum(m_gammaOut, type, getGammaOut(evtGen, type));
+                setFourMomentum(m_eIn, type, getEIn(evt, type));
+                setFourMomentum(m_eOut, type, getEOut(evt, type));
+                setFourMomentum(m_pIn, type, getPIn(evt, type));
+                setFourMomentum(m_pOut, type, getPOut(evt, type));
+                setFourMomentum(m_gammaOut, type, getGammaOut(evt, type));
 
-                setFourMomentum(m_gammaISR, type, getGammaISR(evtGen, type));
-                setFourMomentum(m_gammaFSR, type, getGammaFSR(evtGen, type));
+                setFourMomentum(m_gammaISR, type, getGammaISR(evt, type));
+                setFourMomentum(m_gammaFSR, type, getGammaFSR(evt, type));
         }
 
         //in the case of reconstruction assign mass for charged particles and momentum for photons
         //check if reconstructed
-        m_isReconstructed = false;
+        m_isReconstructed = true;
 
         const double c_electronMass = 0.510998910E-3;
         const double c_protonMass = 0.938272013;
@@ -600,8 +601,11 @@ bool DVCSEvent::improveReconstruction(std::pair<TLorentzVector, TLorentzVector>&
         //check if reconstructed
         if(getFourMomentum(lvs, KinematicsType::Observed) == TLorentzVector()) return false;
 
-        //get
+        //get (TODO: copy made here)
         TLorentzVector lv = getFourMomentum(lvs, KinematicsType::Observed);
+
+        //check if reconstructed
+        if(lv.Px() == -1. && lv.Py() == -1. && lv.Pz() == -1. && lv.E() == -1.) return false;
 
         //assign energy
         if(mass > 0.){
