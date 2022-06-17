@@ -65,7 +65,7 @@ public:
         double getEtaGFSR(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get four-momentum of scattered proton
-        const TLorentzVector& getPOut(KinematicsType::Type type) const;
+        const TLorentzVector& getPOut(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get beam polarisation
         int getBeamPolarisation() const;
