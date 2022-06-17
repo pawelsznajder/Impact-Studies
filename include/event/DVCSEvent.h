@@ -64,6 +64,9 @@ public:
         //get pseudo-rapidity of FSR photon 
         double getEtaGFSR(KinematicsType::Type type = KinematicsType::Observed) const;
 
+        //get four-momentum of scattered proton
+        const TLorentzVector& getPOut(KinematicsType::Type type) const;
+
         //get beam polarisation
         int getBeamPolarisation() const;
 

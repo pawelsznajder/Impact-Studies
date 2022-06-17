@@ -568,6 +568,10 @@ double DVCSEvent::getEtaGFSR(KinematicsType::Type type) const{
         return getFourMomentum(m_gammaFSR, type).Eta();
 }
 
+const TLorentzVector& DVCSEvent::getPOut(KinematicsType::Type type) const{
+        return getFourMomentum(m_pOut, type);
+}
+
 int DVCSEvent::getBeamPolarisation() const{
         return m_beamPolarisation;
 }
