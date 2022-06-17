@@ -4,7 +4,6 @@
 #include <HepMC3/ReaderAscii.h>
 
 #include "../include/analysis/AnalysisGeneral.h"
-#include "../include/analysis/AnalysisEpIC.h"
 #include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
@@ -52,7 +51,6 @@ int main(int argc, char* argv[]){
 
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
-	AnalysisEpIC analysisEpIC;
 	AnalysisGeneralRC analysisGeneralRC;
 	AnalysisALU analysisALU;
 	AnalysisTSlope analysisTSlope;
@@ -225,7 +223,6 @@ int main(int argc, char* argv[]){
 
 		               	 	//fill
 		               	 	analysisGeneral.fill(dvcsEvent, 1.);
-					analysisEpIC.fill(dvcsEvent, 1.);
 		               	 	analysisGeneralRC.fill(dvcsEvent, 1.);
 		               	 	analysisALU.fill(dvcsEvent, 1.);
 							analysisTSlope.fill(dvcsEvent, thisWeight);
@@ -244,14 +241,12 @@ int main(int argc, char* argv[]){
    
 	//analyse
 	analysisGeneral.analyse();
-	analysisEpIC.analyse();
 	analysisGeneralRC.analyse();
 	analysisALU.analyse();
 	analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
-	analysisEpIC.plot("analysisEpIC.pdf");
 	analysisGeneralRC.plot("analysisGeneralRC.pdf");
 	analysisALU.plot("analysisALU.pdf");
 	analysisTSlope.plot("analysisTSlope.pdf");

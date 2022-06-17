@@ -58,6 +58,9 @@ public:
         //get pseudo-rapidity of radiative photon of given type
         double getEtaGammaRC(RCType::Type type) const;
 
+        //get 4-mom of scattered proton
+        const TLorentzVector& getPOut(KinematicsType::Type type = KinematicsType::Observed) const;
+
         //get beam polarisation
         int getBeamPolarisation() const;
 

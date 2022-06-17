@@ -570,6 +570,10 @@ double DVCSEvent::getEtaGammaRC(RCType::Type type) const{
         return it->second.Eta();
 }
 
+const TLorentzVector& DVCSEvent::getPOut(KinematicsType::Type type) const{
+        return getFourMomentum(m_pOut, type);
+}
+
 int DVCSEvent::getBeamPolarisation() const{
         return m_beamPolarisation;
 }
