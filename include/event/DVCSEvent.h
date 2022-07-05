@@ -67,6 +67,12 @@ public:
         //get four-momentum of scattered proton
         const TLorentzVector& getPOut(KinematicsType::Type type = KinematicsType::Observed) const;
 
+        //get four-momentum of outgoing photon
+        const TLorentzVector& getGammaOut(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get four-momentum of scattered proton
+        const TLorentzVector& getEOut(KinematicsType::Type type = KinematicsType::Observed) const;
+
         //get beam polarisation
         int getBeamPolarisation() const;
 

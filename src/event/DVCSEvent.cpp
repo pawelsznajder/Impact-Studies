@@ -572,6 +572,14 @@ const TLorentzVector& DVCSEvent::getPOut(KinematicsType::Type type) const{
         return getFourMomentum(m_pOut, type);
 }
 
+const TLorentzVector& DVCSEvent::getGammaOut(KinematicsType::Type type) const{
+        return getFourMomentum(m_gammaOut, type);
+}
+
+const TLorentzVector& DVCSEvent::getEOut(KinematicsType::Type type) const{
+        return getFourMomentum(m_eOut, type);
+}
+
 int DVCSEvent::getBeamPolarisation() const{
         return m_beamPolarisation;
 }
