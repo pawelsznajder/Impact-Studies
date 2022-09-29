@@ -205,6 +205,18 @@ TLorentzVector DVCSEvent::getEIn(const GenEvent& evt, KinematicsType::Type type)
                 if((*it)->pid() != 11) continue;
 
                 //if observed just look for electron with status 4
+                if((*it)->status() == 4){
+
+                        result = makeTLorentzVector(*it);
+                        isOK = true;
+                        break;
+                } 
+
+                /*CHANGE
+                //only electron
+                if((*it)->pid() != 11) continue;
+
+                //if observed just look for electron with status 4
                 if(type == KinematicsType::Observed){
                         if((*it)->status() == 4){
 
@@ -240,6 +252,7 @@ TLorentzVector DVCSEvent::getEIn(const GenEvent& evt, KinematicsType::Type type)
                                 }
                         }
                 }
+                */
         }
 
         //check if ok
@@ -262,6 +275,18 @@ TLorentzVector DVCSEvent::getEOut(const GenEvent& evt, KinematicsType::Type type
 
         for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
 
+                //only electron
+                if((*it)->pid() != 11) continue;
+
+                //if observed just look for electron with status 4
+                if((*it)->status() == 5){
+
+                        result = makeTLorentzVector(*it);
+                        isOK = true;
+                        break;
+                } 
+
+                /*CHANGE
                 //only electron
                 if((*it)->pid() != 11) continue;
 
@@ -302,6 +327,7 @@ TLorentzVector DVCSEvent::getEOut(const GenEvent& evt, KinematicsType::Type type
                                 }
                         }
                 }
+                */
         }
 
         //check if ok
@@ -333,7 +359,20 @@ TLorentzVector DVCSEvent::getPIn(const GenEvent& evt, KinematicsType::Type type)
                         result = makeTLorentzVector(*it);
                         isOK = true;
                         break;
-                }         
+                }  
+
+                /*CHANGE
+                //only proton
+                if((*it)->pid() != 2212) continue;
+
+                //is marked as beam 
+                if((*it)->status() == 4){
+
+                        result = makeTLorentzVector(*it);
+                        isOK = true;
+                        break;
+                }
+                */      
         }
 
         //check if ok
@@ -356,6 +395,19 @@ TLorentzVector DVCSEvent::getPOut(const GenEvent& evt, KinematicsType::Type type
 
         for(std::vector<ConstGenParticlePtr>::const_iterator it = particles.begin(); it != particles.end(); it++){
 
+
+                //only proton
+                if((*it)->pid() != 2212) continue;
+
+                //is marked as beam 
+                if((*it)->status() == 5){
+
+                        result = makeTLorentzVector(*it);
+                        isOK = true;
+                        break;
+                }  
+
+                /*CHANGE
                 //only proton
                 if((*it)->pid() != 2212) continue;
 
@@ -365,7 +417,8 @@ TLorentzVector DVCSEvent::getPOut(const GenEvent& evt, KinematicsType::Type type
                         result = makeTLorentzVector(*it);
                         isOK = true;
                         break;
-                }         
+                }    
+                */     
         }
 
         //check if ok
@@ -403,7 +456,8 @@ TLorentzVector DVCSEvent::getGammaOut(const GenEvent& evt, KinematicsType::Type 
                         for(std::vector<ConstGenParticlePtr>::const_iterator itIn = particlesIn.begin(); itIn != particlesIn.end(); itIn++){
                                 
                                 if((*itIn)->pid() == 2212) hasP = true;
-                                if((*itIn)->status() == 13 && (*itIn)->pid() == 22) hasGammaStar = true;
+                              //CHANGE  if((*itIn)->status() == 13 && (*itIn)->pid() == 22) hasGammaStar = true;
+                                if((*itIn)->status() == 6 && (*itIn)->pid() == 22) hasGammaStar = true;
                         }   
 
                         //save
@@ -442,7 +496,6 @@ TLorentzVector DVCSEvent::getGammaISR(const GenEvent& evt, KinematicsType::Type 
                 //ISR
                 if((*it)->parents().size() == 1){
                         if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 4){
-                                
                                 result = makeTLorentzVector(*it);
                                 break;
                         }
@@ -471,7 +524,8 @@ TLorentzVector DVCSEvent::getGammaFSR(const GenEvent& evt, KinematicsType::Type 
 
                 //FSR
                 if((*it)->parents().size() == 1){
-                    if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 1 && (*it)->production_vertex()->particles_out().size() == 2){
+                   //CHANGE if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 1 && (*it)->production_vertex()->particles_out().size() == 2){
+                           if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 5 && (*it)->production_vertex()->particles_out().size() == 2){
                            
                                 bool hasE = false;
                                 bool hasGamma = false;
@@ -485,9 +539,8 @@ TLorentzVector DVCSEvent::getGammaFSR(const GenEvent& evt, KinematicsType::Type 
                                         if((*itOut)->pid() == 22) hasGamma = true;
                                 }   
 
-
                                 if(hasE && hasGamma){
-                                        
+
                                         result = makeTLorentzVector(*it);
                                         break;
                                 }

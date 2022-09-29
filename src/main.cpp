@@ -178,7 +178,7 @@ int main(int argc, char* argv[]){
 						std::stoul((runInfo->attributes().find("generated_events_number")->second)->unparsed_string()));
 
 					beamPolarisation.push_back(
-						std::stoi((runInfo->attributes().find("beam_polarisation")->second)->unparsed_string()));
+						std::stoi((runInfo->attributes().find("lepton_polarisation")->second)->unparsed_string()));
 
 					subProcessTypeMask.push_back(
 						SubProcessType::getSubProcessTypeMaskFromStdString(
