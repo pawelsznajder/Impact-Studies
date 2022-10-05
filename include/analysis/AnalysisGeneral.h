@@ -32,6 +32,13 @@ public:
 
 private:
 
+	//reconstruction probabilities
+	double m_resProbPOut[2];
+	double m_resProbEOut[2];
+	double m_resProbGOut[2];
+
+	double m_resProbExcl[2];
+
 	//2D histograms
 	TH2* m_hXBvsQ2;
 	TH2* m_hxBvsQ2[2];
@@ -66,6 +73,6 @@ private:
 	
 	TH1* m_hRatio[21];
 		
-	TLegend* leg[3];
+	TLegend* leg[6];
 };
 #endif

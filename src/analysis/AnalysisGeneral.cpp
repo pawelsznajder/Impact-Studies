@@ -12,6 +12,16 @@ AnalysisGeneral::AnalysisGeneral() : Analysis("AnalysisGeneral"){
 	//number of bins 
 	int nbin = 100;
 
+	//reconstruction probabilities
+	for(size_t i = 0; i < 2; i++){
+
+		m_resProbPOut[i] = 0;
+		m_resProbEOut[i] = 0;
+		m_resProbGOut[i] = 0;
+
+		m_resProbExcl[i] = 0;
+	}
+
 	//set 2D histograms
 	m_hXBvsQ2 = new TH2D((HashManager::getInstance()->getHash()).c_str(), "xB vs. Q2", 
 		nbin, -4., 0., nbin, 0., 3.);
@@ -63,8 +73,8 @@ AnalysisGeneral::~AnalysisGeneral(){
 
 void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 
-	//fill 2D histograms
-	m_hXBvsQ2->Fill(log10(event.getXB()), log10(event.getQ2()), weight);
+	//reset weight
+	weight = 1.;
 
 	//fill 1D histograms
 	for(size_t i = 0; i < 2; i++){
@@ -72,50 +82,75 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 		//type
 		KinematicsType::Type kinematicsType = (i == 0)?(KinematicsType::True):(KinematicsType::Observed);
 
-		//check if reconstricted
-	//	if(kinematicsType == KinematicsType::Observed && (! event.isReconstructed())) continue;
-		//if (event.getY(kinematicsType) > 0.05) {
+		if (event.getPOut(kinematicsType).E() > 0.) {
 
-		if (event.getPOut(kinematicsType).E() > 0.) {//continue;
-		m_hPPOut[i]->Fill(event.getPOut(kinematicsType).P(), weight);
-		m_hPPtOut[i]->Fill(event.getPOut(kinematicsType).Pt(), weight);
-		m_hPThOut[i]->Fill(event.getPOut(kinematicsType).Theta()*1000., weight);
-		m_hPPhOut[i]->Fill(event.getPOut(kinematicsType).Phi(), weight);
-		m_hEtaPOut[i]->Fill(event.getEtaPOut(kinematicsType), weight);
+			m_resProbPOut[i]++;
+
+			m_hPPOut[i]->Fill(event.getPOut(kinematicsType).P(), weight);
+			m_hPPtOut[i]->Fill(event.getPOut(kinematicsType).Pt(), weight);
+			m_hPThOut[i]->Fill(event.getPOut(kinematicsType).Theta()*1000., weight);
+			m_hPPhOut[i]->Fill(event.getPOut(kinematicsType).Phi(), weight);
+			m_hEtaPOut[i]->Fill(event.getEtaPOut(kinematicsType), weight);
 		}
-		if (event.getEOut(kinematicsType).E() > 0.) { //continue;
-		m_hEPOut[i]->Fill(event.getEOut(kinematicsType).P(), weight);
-		m_hEPtOut[i]->Fill(event.getEOut(kinematicsType).Pt(), weight);
-		m_hEThOut[i]->Fill(event.getEOut(kinematicsType).Theta(), weight);
-		m_hEPhOut[i]->Fill(event.getEOut(kinematicsType).Phi(), weight);
-		m_hEtaEOut[i]->Fill(event.getEtaEOut(kinematicsType), weight);
+		if (event.getEOut(kinematicsType).E() > 0.) { 
+
+			m_resProbEOut[i]++;
+
+			m_hEPOut[i]->Fill(event.getEOut(kinematicsType).P(), weight);
+			m_hEPtOut[i]->Fill(event.getEOut(kinematicsType).Pt(), weight);
+			m_hEThOut[i]->Fill(event.getEOut(kinematicsType).Theta(), weight);
+			m_hEPhOut[i]->Fill(event.getEOut(kinematicsType).Phi(), weight);
+			m_hEtaEOut[i]->Fill(event.getEtaEOut(kinematicsType), weight);
 		}
-		if (event.getGammaOut(kinematicsType).E() > 0.) { //continue;
-		m_hGPOut[i]->Fill(event.getGammaOut(kinematicsType).P(), weight);
-		m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsType).Pt(), weight);
-		m_hGThOut[i]->Fill(event.getGammaOut(kinematicsType).Theta(), weight);
-		m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsType).Phi(), weight);
-		m_hEtaGOut[i]->Fill(event.getEtaGOut(kinematicsType), weight);
+		if (event.getGammaOut(kinematicsType).E() > 0.) { 
+
+			m_resProbGOut[i]++;
+
+			m_hGPOut[i]->Fill(event.getGammaOut(kinematicsType).P(), weight);
+			m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsType).Pt(), weight);
+			m_hGThOut[i]->Fill(event.getGammaOut(kinematicsType).Theta(), weight);
+			m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsType).Phi(), weight);
+			m_hEtaGOut[i]->Fill(event.getEtaGOut(kinematicsType), weight);
 		}
 
 		if (event.getPOut(kinematicsType).E() < 0. || event.getEOut(kinematicsType).E() < 0. || event.getGammaOut(kinematicsType).E() < 0.) continue; 
 
-		m_hXB[i]->Fill(log10(event.getXB(kinematicsType)), weight);
-		m_hQ2[i]->Fill(log10(event.getQ2(kinematicsType)), weight);
-		m_hT[i]->Fill(fabs(event.getT(kinematicsType)), weight);
-		m_hPhi[i]->Fill(event.getPhi(kinematicsType), weight);
-		m_hPhiS[i]->Fill(event.getPhiS(kinematicsType), weight);
-		m_hY[i]->Fill(event.getY(kinematicsType), weight);
+			m_resProbExcl[i]++;
 
-		m_hxBvsQ2[i]->Fill(log10(event.getXB(kinematicsType)), log10(event.getQ2(kinematicsType)), weight);
-		m_hXBvsT[i]->Fill(log10(event.getXB(kinematicsType)), fabs(event.getT(kinematicsType)), weight);
-		m_hXBvsY[i]->Fill(log10(event.getXB(kinematicsType)), event.getY(kinematicsType), weight);
-		m_hQ2vsT[i]->Fill(log10(event.getQ2(kinematicsType)), fabs(event.getT(kinematicsType)), weight);
-		m_hYvsT[i]->Fill(event.getY(kinematicsType), fabs(event.getT(kinematicsType)), weight);
-		m_hQ2vsY[i]->Fill(log10(event.getQ2(kinematicsType)), event.getY(kinematicsType), weight);
-		//}
+			m_hXBvsQ2->Fill(log10(event.getXB()), log10(event.getQ2()), weight);
+
+			m_hXB[i]->Fill(log10(event.getXB(kinematicsType)), weight);
+			m_hQ2[i]->Fill(log10(event.getQ2(kinematicsType)), weight);
+			m_hT[i]->Fill(fabs(event.getT(kinematicsType)), weight);
+			m_hPhi[i]->Fill(event.getPhi(kinematicsType), weight);
+			m_hPhiS[i]->Fill(event.getPhiS(kinematicsType), weight);
+			m_hY[i]->Fill(event.getY(kinematicsType), weight);
+
+			m_hxBvsQ2[i]->Fill(log10(event.getXB(kinematicsType)), log10(event.getQ2(kinematicsType)), weight);
+			m_hXBvsT[i]->Fill(log10(event.getXB(kinematicsType)), fabs(event.getT(kinematicsType)), weight);
+			m_hXBvsY[i]->Fill(log10(event.getXB(kinematicsType)), event.getY(kinematicsType), weight);
+			m_hQ2vsT[i]->Fill(log10(event.getQ2(kinematicsType)), fabs(event.getT(kinematicsType)), weight);
+			m_hYvsT[i]->Fill(event.getY(kinematicsType), fabs(event.getT(kinematicsType)), weight);
+			m_hQ2vsY[i]->Fill(log10(event.getQ2(kinematicsType)), event.getY(kinematicsType), weight);
 	}
-	
+}
+
+void AnalysisGeneral::analyse(){
+	//nothing to be done here
+}
+
+void AnalysisGeneral::plot(const std::string& path){
+
+	//print reconstruction probabilities
+	std::cout << "info: " << __func__ << ":  p': generated: " << m_resProbPOut[0] << "\treconstructed: " << 
+		m_resProbPOut[1] << "\tratio: " << m_resProbPOut[1]/double(m_resProbPOut[0]) << std::endl;
+	std::cout << "info: " << __func__ << ":  e': generated: " << m_resProbEOut[0] << "\treconstructed: " << 
+		m_resProbEOut[1] << "\tratio: " << m_resProbEOut[1]/double(m_resProbEOut[0]) << std::endl;
+	std::cout << "info: " << __func__ << ": gam: generated: " << m_resProbGOut[0] << "\treconstructed: " << 
+		m_resProbGOut[1] << "\tratio: " << m_resProbGOut[1]/double(m_resProbGOut[0]) << std::endl;
+	std::cout << "info: " << __func__ << ": all: generated: " << m_resProbExcl[0] << "\treconstructed: " << 
+		m_resProbExcl[1] << "\tratio: " << m_resProbExcl[1]/double(m_resProbExcl[0]) << std::endl;
+
 	//Clone and make ratio of histograms
 	m_hRatio[0] = (TH1*)m_hPPOut[1]->Clone();
 	m_hRatio[0]->Divide(m_hPPOut[0]); // PPOut ratio
@@ -162,13 +197,6 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 	m_hRatio[19]->Divide(m_hPhi[0]); // phi ratio
 	m_hRatio[20] = (TH1*)m_hPhiS[1]->Clone();
 	m_hRatio[20]->Divide(m_hPhiS[0]); // phi_s ratio
-}
-
-void AnalysisGeneral::analyse(){
-	//nothing to be done here
-}
-
-void AnalysisGeneral::plot(const std::string& path){
 
 	//canvases
 	std::vector<TCanvas*> cans;
