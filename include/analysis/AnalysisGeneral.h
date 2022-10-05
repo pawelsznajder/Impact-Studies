@@ -63,6 +63,8 @@ private:
 	TH1* m_hGPtOut[2];
 	TH1* m_hGThOut[2];
 	TH1* m_hGPhOut[2];
+	
+	TH1* m_hRatio[21];
 		
 	TLegend* leg[3];
 };
