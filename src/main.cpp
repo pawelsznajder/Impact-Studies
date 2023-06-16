@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
 	AnalysisGeneral analysisGeneral;
 //	AnalysisEpIC analysisEpIC;
 	// AnalysisGeneralRC analysisGeneralRC;
-	// AnalysisALU analysisALU;
+	AnalysisALU analysisALU;
 	// AnalysisTSlope analysisTSlope;
 
 	//vectors to store info from files
@@ -249,7 +249,7 @@ int main(int argc, char* argv[]){
 	               	 	analysisGeneral.fill(dvcsEvent, 1.);
 						// analysisEpIC.fill(dvcsEvent, 1.);
 	     //           	 	analysisGeneralRC.fill(dvcsEvent, 1.);
-	     //           	 	analysisALU.fill(dvcsEvent, 1.);
+	               	 	analysisALU.fill(dvcsEvent, 1.);
 						// analysisTSlope.fill(dvcsEvent, thisWeight);
 					
 						//counter
@@ -271,14 +271,14 @@ int main(int argc, char* argv[]){
 	analysisGeneral.analyse();
 	//analysisEpIC.analyse();
 	// analysisGeneralRC.analyse();
-	// analysisALU.analyse();
+	analysisALU.analyse();
 	// analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
 	//analysisEpIC.plot("analysisEpIC.pdf");
 	// analysisGeneralRC.plot("analysisGeneralRC.pdf");
-	// analysisALU.plot("analysisALU.pdf");
+	analysisALU.plot("analysisALU.pdf");
 	// analysisTSlope.plot("analysisTSlope.pdf");
 
 	return 0;

@@ -279,7 +279,7 @@ TLorentzVector DVCSEvent::getEOut(const GenEvent& evt, KinematicsType::Type type
                 if((*it)->pid() != 11) continue;
 
                 //if observed just look for electron with status 4
-                if((*it)->status() == 5){
+                if((*it)->status() == 1){
 
                         result = makeTLorentzVector(*it);
                         isOK = true;
@@ -400,7 +400,7 @@ TLorentzVector DVCSEvent::getPOut(const GenEvent& evt, KinematicsType::Type type
                 if((*it)->pid() != 2212) continue;
 
                 //is marked as beam 
-                if((*it)->status() == 5){
+                if((*it)->status() == 1){
 
                         result = makeTLorentzVector(*it);
                         isOK = true;
@@ -456,8 +456,7 @@ TLorentzVector DVCSEvent::getGammaOut(const GenEvent& evt, KinematicsType::Type 
                         for(std::vector<ConstGenParticlePtr>::const_iterator itIn = particlesIn.begin(); itIn != particlesIn.end(); itIn++){
                                 
                                 if((*itIn)->pid() == 2212) hasP = true;
-                              //CHANGE  if((*itIn)->status() == 13 && (*itIn)->pid() == 22) hasGammaStar = true;
-                                if((*itIn)->status() == 6 && (*itIn)->pid() == 22) hasGammaStar = true;
+                                if((*itIn)->status() == 13 && (*itIn)->pid() == 22) hasGammaStar = true;
                         }   
 
                         //save
@@ -524,8 +523,8 @@ TLorentzVector DVCSEvent::getGammaFSR(const GenEvent& evt, KinematicsType::Type 
 
                 //FSR
                 if((*it)->parents().size() == 1){
-                   //CHANGE if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 1 && (*it)->production_vertex()->particles_out().size() == 2){
-                           if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 5 && (*it)->production_vertex()->particles_out().size() == 2){
+
+                           if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 1 && (*it)->production_vertex()->particles_out().size() == 2){
                            
                                 bool hasE = false;
                                 bool hasGamma = false;
@@ -552,6 +551,34 @@ TLorentzVector DVCSEvent::getGammaFSR(const GenEvent& evt, KinematicsType::Type 
         return result;
 }
 
+const TLorentzVector& DVCSEvent::getEIn(KinematicsType::Type type) const{
+        return getFourMomentum(m_eIn, type);
+}
+
+const TLorentzVector& DVCSEvent::getEOut(KinematicsType::Type type) const{
+        return getFourMomentum(m_eOut, type);
+}
+
+const TLorentzVector& DVCSEvent::getPIn(KinematicsType::Type type) const{
+        return getFourMomentum(m_pIn, type);
+}
+
+const TLorentzVector& DVCSEvent::getPOut(KinematicsType::Type type) const{
+        return getFourMomentum(m_pOut, type);
+}
+
+const TLorentzVector& DVCSEvent::getGammaOut(KinematicsType::Type type) const{
+        return getFourMomentum(m_gammaOut, type);
+}
+
+const TLorentzVector& DVCSEvent::getGammaISR(KinematicsType::Type type) const{
+        return getFourMomentum(m_gammaISR, type);
+}
+
+const TLorentzVector& DVCSEvent::getGammaFSR(KinematicsType::Type type) const{
+        return getFourMomentum(m_gammaFSR, type);
+}       
+
 double DVCSEvent::getXB(KinematicsType::Type type) const{
         return -1 * getFourMomentum(m_gammaStar, type).Mag2() / (2 * getFourMomentum(m_pIn, type) * getFourMomentum(m_gammaStar, type));
 }
@@ -574,63 +601,6 @@ double DVCSEvent::getPhi(KinematicsType::Type type) const{
 
 double DVCSEvent::getPhiS(KinematicsType::Type type) const{
         return getPhiPhiS(1, getFourMomentum(m_gammaStar, type), getFourMomentum(m_pIn, type), getFourMomentum(m_eIn, type), getFourMomentum(m_eOut, type), getFourMomentum(m_gammaOut, type));
-}
-
-double DVCSEvent::getEtaEOut(KinematicsType::Type type) const{
-
-        return getFourMomentum(m_eOut, type).Eta();
-}
-
-double DVCSEvent::getEtaPOut(KinematicsType::Type type) const{
-        return getFourMomentum(m_pOut, type).Eta();
-}
-
-double DVCSEvent::getEtaGOut(KinematicsType::Type type) const{
-        return getFourMomentum(m_gammaOut, type).Eta();
-}
-
-double DVCSEvent::getEGISR(KinematicsType::Type type) const{
-
-        if(! checkRCType(RCType::ISR)) return -1.E12;
-        if(type == KinematicsType::Observed && m_gammaISR.second == TLorentzVector()) return -1.E12;
-
-        return getFourMomentum(m_gammaISR, type).E();
-}
-
-double DVCSEvent::getEGFSR(KinematicsType::Type type) const{
-
-        if(! checkRCType(RCType::FSR)) return -1.E12;
-        if(type == KinematicsType::Observed && m_gammaFSR.second == TLorentzVector()) return -1.E12;
-
-        return getFourMomentum(m_gammaFSR, type).E();
-}
-
-double DVCSEvent::getEtaGISR(KinematicsType::Type type) const{
-
-        if(! checkRCType(RCType::ISR)) return -1.E12;
-        if(type == KinematicsType::Observed && m_gammaISR.second == TLorentzVector()) return -1.E12;
-
-        return getFourMomentum(m_gammaISR, type).Eta();
-}
-
-double DVCSEvent::getEtaGFSR(KinematicsType::Type type) const{
-
-        if(! checkRCType(RCType::FSR)) return -1.E12;
-        if(type == KinematicsType::Observed && m_gammaFSR.second == TLorentzVector()) return -1.E12;
-
-        return getFourMomentum(m_gammaFSR, type).Eta();
-}
-
-const TLorentzVector& DVCSEvent::getPOut(KinematicsType::Type type) const{
-        return getFourMomentum(m_pOut, type);
-}
-
-const TLorentzVector& DVCSEvent::getGammaOut(KinematicsType::Type type) const{
-        return getFourMomentum(m_gammaOut, type);
-}
-
-const TLorentzVector& DVCSEvent::getEOut(KinematicsType::Type type) const{
-        return getFourMomentum(m_eOut, type);
 }
 
 int DVCSEvent::getBeamPolarisation() const{
@@ -684,10 +654,10 @@ bool DVCSEvent::improveReconstruction(std::pair<TLorentzVector, TLorentzVector>&
         }
         //assign momentum
         else{
-                lv.SetVect(
-                        lv.E() * 
-                        getFourMomentum(lvs, KinematicsType::True).Vect().Unit()
-                );
+                // lv.SetVect(
+                //         lv.E() * 
+                //         getFourMomentum(lvs, KinematicsType::True).Vect().Unit()
+                // );
         }
 
         //set

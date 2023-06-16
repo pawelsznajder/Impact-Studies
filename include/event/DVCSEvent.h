@@ -25,6 +25,27 @@ public:
         //destructor
         virtual ~DVCSEvent();
 
+        //get four-momentum of beam electron  
+        const TLorentzVector& getEIn(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get four-momentum of outgoing electron  
+        const TLorentzVector& getEOut(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get four-momentum of beam proton 
+        const TLorentzVector& getPIn(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get four-momentum of outgoing proton  
+        const TLorentzVector& getPOut(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get four-momentum of DVCS photon 
+        const TLorentzVector& getGammaOut(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get four-momenta of ISR photons  
+        const TLorentzVector& getGammaISR(KinematicsType::Type type = KinematicsType::Observed) const;
+
+        //get four-momenta of FSR photons  
+        const TLorentzVector& getGammaFSR(KinematicsType::Type type = KinematicsType::Observed) const;
+
         //get xB
         double getXB(KinematicsType::Type type = KinematicsType::Observed) const;
 
@@ -42,36 +63,6 @@ public:
 
         //get phiS
         double getPhiS(KinematicsType::Type type = KinematicsType::Observed) const;
-        
-	//get pseudo-rapidity of outgoing electron
-        double getEtaEOut(KinematicsType::Type type = KinematicsType::Observed) const;
-
-	//get pseudo-rapidity of outgoing proton
-        double getEtaPOut(KinematicsType::Type type = KinematicsType::Observed) const;
-
-	//get pseudo-rapidity of outgoing photon
-        double getEtaGOut(KinematicsType::Type type = KinematicsType::Observed) const;
-
-        //get energy of ISR photon 
-        double getEGISR(KinematicsType::Type type = KinematicsType::Observed) const;
-
-        //get energy of FSR photon 
-        double getEGFSR(KinematicsType::Type type = KinematicsType::Observed) const;
-
-        //get pseudo-rapidity of ISR photon 
-        double getEtaGISR(KinematicsType::Type type = KinematicsType::Observed) const;
-
-        //get pseudo-rapidity of FSR photon 
-        double getEtaGFSR(KinematicsType::Type type = KinematicsType::Observed) const;
-
-        //get four-momentum of scattered proton
-        const TLorentzVector& getPOut(KinematicsType::Type type = KinematicsType::Observed) const;
-
-        //get four-momentum of outgoing photon
-        const TLorentzVector& getGammaOut(KinematicsType::Type type = KinematicsType::Observed) const;
-
-        //get four-momentum of scattered proton
-        const TLorentzVector& getEOut(KinematicsType::Type type = KinematicsType::Observed) const;
 
         //get beam polarisation
         int getBeamPolarisation() const;

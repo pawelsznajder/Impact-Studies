@@ -90,7 +90,7 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 			m_hPPtOut[i]->Fill(event.getPOut(kinematicsType).Pt(), weight);
 			m_hPThOut[i]->Fill(event.getPOut(kinematicsType).Theta()*1000., weight);
 			m_hPPhOut[i]->Fill(event.getPOut(kinematicsType).Phi(), weight);
-			m_hEtaPOut[i]->Fill(event.getEtaPOut(kinematicsType), weight);
+			m_hEtaPOut[i]->Fill(event.getPOut(kinematicsType).Eta(), weight);
 		}
 		if (event.getEOut(kinematicsType).E() > 0.) { 
 
@@ -100,7 +100,7 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 			m_hEPtOut[i]->Fill(event.getEOut(kinematicsType).Pt(), weight);
 			m_hEThOut[i]->Fill(event.getEOut(kinematicsType).Theta(), weight);
 			m_hEPhOut[i]->Fill(event.getEOut(kinematicsType).Phi(), weight);
-			m_hEtaEOut[i]->Fill(event.getEtaEOut(kinematicsType), weight);
+			m_hEtaEOut[i]->Fill(event.getEOut(kinematicsType).Eta(), weight);
 		}
 		if (event.getGammaOut(kinematicsType).E() > 0.) { 
 
@@ -110,7 +110,7 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 			m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsType).Pt(), weight);
 			m_hGThOut[i]->Fill(event.getGammaOut(kinematicsType).Theta(), weight);
 			m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsType).Phi(), weight);
-			m_hEtaGOut[i]->Fill(event.getEtaGOut(kinematicsType), weight);
+			m_hEtaGOut[i]->Fill(event.getGammaOut(kinematicsType).Eta(), weight);
 		}
 
 		if (event.getPOut(kinematicsType).E() < 0. || event.getEOut(kinematicsType).E() < 0. || event.getGammaOut(kinematicsType).E() < 0.) continue; 
