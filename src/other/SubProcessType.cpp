@@ -48,6 +48,13 @@ int SubProcessType::getSubProcessTypeMaskFromStdString(const std::string& str){
   if(str.find("INT") != std::string::npos) result |= SubProcessType::INT;
   if(str.find("DVCS") != std::string::npos) result |= SubProcessType::DVCS;
 
+  if(str.find("ALL") != std::string::npos){
+   
+    result |= SubProcessType::BH;
+    result |= SubProcessType::INT;
+    result |= SubProcessType::DVCS;
+  }
+
   return result;
 }
 

@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "../../include/other/HashManager.h"
+#include "../../include/other/SubProcessType.h"
 
 BinALU::BinALU(
 	const std::pair<double, double>& rangeXB, 
@@ -72,28 +73,36 @@ void BinALU::reset(){
 
 void BinALU::fill(DVCSEvent& event, double weight){
 
-	//run for parent class
+	
+	//only reconstructed
+	if(! event.isReconstructed()) return;
+
+	//fill
+	switch(event.getBeamPolarisation()){
+
+	 	case -1:{
+
+	 		m_hDistributions.first->Fill(event.getPhi());
+
+	 		break;
+	 	}
+
+	   	case 1:{
+
+	   		m_hDistributions.second->Fill(event.getPhi());
+
+	   	 	break;
+	   	}
+
+	   default:{
+	   		std::cout << __func__ << " error: wrong beam polarisation state, " << event.getBeamPolarisation() << std::endl;
+			exit(0);
+	   }
+	}
+
+	//kinematics
 	Bin::fill(event, weight);
 
-	//pol -
-	if(event.getBeamPolarisation() == -1){
-		m_hDistributions.first->Fill(event.getPhi(), weight);
-	}
-
-	//pol +
-	else if(event.getBeamPolarisation() == 1){
-		m_hDistributions.second->Fill(event.getPhi(), weight);
-	}
-
-	//none
-	else{
-
-		std::cout << getClassName() << "::" << __func__ << " error: " << 
-			"wrong polarisation, " << event.getBeamPolarisation() << std::endl;
-		exit(0);
-	}
-
-	//add
 	m_sumXB += weight * event.getXB();
 	m_sumQ2 += weight * event.getQ2();
 	m_sumT += weight * event.getT();
@@ -107,11 +116,6 @@ void BinALU::analyse(){
 
 	//skip bins with low entry
 	if(m_nEvents < 100){
-		return;
-	}
-
-	//skip bins with low summed weights
-	if(m_sumWeights < 100.){
 		return;
 	}
 

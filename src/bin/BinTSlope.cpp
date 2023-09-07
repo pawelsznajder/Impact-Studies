@@ -10,7 +10,7 @@ BinTSlope::BinTSlope(
 	const std::pair<double, double>& rangeQ2, 
 	size_t nTBins,
 	const std::pair<double, double>& rangeT
-) : Bin("BinTSlope") {
+) : Bin("BinTSlope"), m_lumiALL(0.), m_lumiBH(0.) {
 
 	//reset
 	reset();
@@ -20,18 +20,27 @@ BinTSlope::BinTSlope(
 	m_rangeQ2 = checkRange(rangeQ2);
 	m_rangeT = checkRange(rangeT);
 
-	//labels
-	std::stringstream ss;
-
-	ss << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
-		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
- 
 	//make histograms
-	m_hDistribution = new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
-					nTBins, rangeT.first, rangeT.second);
+ 	for(size_t i = 0; i < 4; i++){
 
-	//set sumw2
-	m_hDistribution->Sumw2();
+ 		//labels
+		std::stringstream ss;
+
+		if(i == 0) ss << "ALL rec lumi: ";
+		if(i == 1) ss << "BH gen: ";
+		if(i == 2) ss << "ALL gen: ";
+		if(i == 3) ss << "ALL rec: ";
+
+		ss << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+			m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
+		
+		//make histograms
+		m_hDistributions.push_back(new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
+						nTBins, rangeT.first, rangeT.second));
+
+		//set sumw2
+		m_hDistributions.back()->Sumw2();
+	}
 
 	//function for fitting
 	m_fFit = new TF1((HashManager::getInstance()->getHash()).c_str(), "[0]*exp(-1*[1]*x)", 0., 2.);
@@ -63,22 +72,45 @@ void BinTSlope::reset(){
 	m_nEvents = 0;
 
 	//reset histograms
-	m_hDistribution = nullptr;
+	m_hDistributions.clear();
 	m_hTSlope = nullptr;
+	m_hTAcceptance = nullptr;
 }
 
 void BinTSlope::fill(DVCSEvent& event, double weight){
 
-	//run for parent class
-	Bin::fill(event, weight);
+	//if BH+INT+DVCS
+	if( event.checkSubProcessType(SubProcessType::BH) && 
+		event.checkSubProcessType(SubProcessType::INT) && 
+		event.checkSubProcessType(SubProcessType::DVCS)
+	){
 
-	//fill
-	m_hDistribution->Fill(-1 * event.getT(), weight);
+		if(weight > 0.){
+
+			if(event.isReconstructed()) m_hDistributions.at(0)->Fill(-1 * event.getT());
+			m_lumiALL += weight;
+
+			//kinematics
+			Bin::fill(event, weight);
+
+			m_sumXB += weight * event.getXB();
+			m_sumQ2 += weight * event.getQ2();
+			m_sumT += weight * event.getT();
+		}
+
+		m_hDistributions.at(2)->Fill(-1 * event.getT(KinematicsType::True));
+		if(event.isReconstructed()) m_hDistributions.at(3)->Fill(-1 * event.getT());
+	}
 	
-	//add
-	m_sumXB += weight * event.getXB();
-	m_sumQ2 += weight * event.getQ2();
-	m_sumT += weight * event.getT();
+	//if BH
+	if( event.checkSubProcessType(SubProcessType::BH) && 
+		(! event.checkSubProcessType(SubProcessType::INT)) && 
+		(! event.checkSubProcessType(SubProcessType::DVCS))
+	){
+
+		m_hDistributions.at(1)->Fill(-1 * event.getT(KinematicsType::True));
+		m_lumiBH += weight;
+	}
 }
 
 void BinTSlope::analyse(){
@@ -91,13 +123,19 @@ void BinTSlope::analyse(){
 		return;
 	}
 
-	//skip bins with low summed weights
-	if(m_sumWeights < 2000){
-		return;
-	}
-
 	//make t-slope histogram
-	m_hTSlope = static_cast<TH1*>(m_hDistribution->Clone());
+	m_hTSlope = static_cast<TH1*>(m_hDistributions.at(0)->Clone());
+	m_hTSlope->SetTitle("DVCS corrected");
+
+	//calculate acceptance
+	m_hTAcceptance = static_cast<TH1*>(m_hDistributions.at(3)->Clone());
+	m_hTAcceptance->SetTitle("ALL acceptance");
+	m_hTAcceptance->Divide(m_hDistributions.at(2));
+
+	m_hTSlope->Divide(m_hTAcceptance);
+
+	//subtract BH
+	m_hTSlope->Add(m_hDistributions.at(1), -1 * m_lumiALL/m_lumiBH);
 
 	//fit
 	//fit options: 
@@ -160,10 +198,14 @@ double BinTSlope::getMeanT() const{
 	return getMean(m_sumT, m_sumWeights);
 }
 
-TH1* BinTSlope::getHDistribution() const{
-	return m_hDistribution;
+const std::vector<TH1*>& BinTSlope::getHDistributions() const{
+	return m_hDistributions;
 }
 
 TH1* BinTSlope::getHTSlope() const{
 	return m_hTSlope;
+}
+
+TH1* BinTSlope::getHTAcceptance() const{
+	return m_hTAcceptance;
 }

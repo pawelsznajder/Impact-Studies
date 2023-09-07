@@ -8,7 +8,7 @@
 
 #include "../../include/other/HashManager.h"
 
-AnalysisGeneralRC::AnalysisGeneralRC() : Analysis("AnalysisGeneralRC"){
+AnalysisGeneralRC::AnalysisGeneralRC() : Analysis("AnalysisGeneralRC", 0.){
 
 	//number of bins 
 	int nbin = 100;

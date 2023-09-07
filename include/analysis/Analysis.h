@@ -14,7 +14,7 @@ class Analysis : public BaseObject{
 public:
 
 	//constructor
-	Analysis(const std::string& className) : BaseObject(className){
+	Analysis(const std::string& className, double targetLuminosity) : BaseObject(className), m_targetLuminosity(targetLuminosity){
 	}
 
 	//destructor
@@ -29,6 +29,10 @@ public:
 
 	//plot histograms to file
 	virtual void plot(const std::string& path) = 0;
+
+protected:
+
+	double m_targetLuminosity;	///< target luminosity in fb-1
 };
 
 #endif
