@@ -619,12 +619,12 @@ bool DVCSEvent::isRCSample() const{
         return m_isRCSample;
 }
 
- bool DVCSEvent::checkRCType(int rcTypeMask) const{
-        return (m_rcTypeMask & rcTypeMask);
+ bool DVCSEvent::checkRCType(RCType::Type rcType) const{
+        return (m_rcTypeMask & rcType);
  }
 
-bool DVCSEvent::checkSubProcessType(int subProcessTypeMask) const{
-        return (m_subProcessTypeMask & subProcessTypeMask);
+bool DVCSEvent::checkSubProcessType(SubProcessType::Type subProcessType) const{
+        return (m_subProcessTypeMask & subProcessType);
 }
 
 bool DVCSEvent::isReconstructed() const{
@@ -643,22 +643,13 @@ bool DVCSEvent::improveReconstruction(std::pair<TLorentzVector, TLorentzVector>&
         if(lv.Px() == -1. && lv.Py() == -1. && lv.Pz() == -1. && lv.E() == -1.) return false;
 
         //assign energy
-        if(mass > 0.){
-
-                lv.SetE(
-                        sqrt(
-                                pow(mass, 2) + 
-                                pow(lv.P(), 2)
-                        )
-                );  
-        }
-        //assign momentum
-        else{
-                // lv.SetVect(
-                //         lv.E() * 
-                //         getFourMomentum(lvs, KinematicsType::True).Vect().Unit()
-                // );
-        }
+        lv.SetE(
+                sqrt(
+                        pow(mass, 2) + 
+                        pow(lv.P(), 2)
+                )
+        );  
+        
 
         //set
         setFourMomentum(lvs, KinematicsType::Observed, lv);

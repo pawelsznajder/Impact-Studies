@@ -6,7 +6,8 @@
 
 #include "../../include/other/HashManager.h"
 
-AnalysisALU::AnalysisALU() : Analysis("AnalysisALU"){
+AnalysisALU::AnalysisALU(double targetLuminosity) : Analysis("AnalysisALU", targetLuminosity), 
+	m_lumiM(0.), m_lumiP(0.){
 
 	//set bin boundaries
 	setBinBoundaries();
@@ -20,6 +21,40 @@ AnalysisALU::~AnalysisALU(){
 
 void AnalysisALU::fill(DVCSEvent& event, double weight){
 
+	//only comming from DVCS+INT+BH sample
+	if(! (
+		event.checkSubProcessType(SubProcessType::BH) && 
+		event.checkSubProcessType(SubProcessType::INT) && 
+		event.checkSubProcessType(SubProcessType::DVCS)
+		)
+	) return;
+
+	//only to reach target luminosity
+	switch(event.getBeamPolarisation()){
+
+   	 	case -1:{
+
+   	 		if(m_lumiM >= m_targetLuminosity/2.) return;
+   	 		m_lumiM += weight;
+
+   	 		break;
+   	 	}
+
+       	case 1:{
+
+       		if(m_lumiP >= m_targetLuminosity/2.) return;
+   	 		m_lumiP += weight;
+
+       	 	break;
+       	}
+
+       default:{
+       		std::cout << __func__ << " error: wrong beam polarisation state, " << event.getBeamPolarisation() << std::endl;
+			exit(0);
+       }
+	}
+
+	//fill
 	for(std::vector<BinALU>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
 

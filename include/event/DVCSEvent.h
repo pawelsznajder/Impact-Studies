@@ -6,6 +6,7 @@
 
 #include "../../include/other/BaseObject.h"
 #include "../../include/other/RCType.h"
+#include "../../include/other/SubProcessType.h"
 #include "../../include/other/KinematicsType.h"
 
 
@@ -77,10 +78,10 @@ public:
         bool isRCSample() const;
 
         //check if contains given type of radiation
-        bool checkRCType(int rcTypeMask) const;
+        bool checkRCType(RCType::Type rcType) const;
 
         //check subprocess
-        bool checkSubProcessType(int subProcessTypeMask) const;
+        bool checkSubProcessType(SubProcessType::Type subProcessType) const;
 
         //check if reconstructed
         bool isReconstructed() const;

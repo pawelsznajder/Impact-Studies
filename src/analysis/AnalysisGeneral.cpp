@@ -7,7 +7,7 @@
 
 #include "../../include/other/HashManager.h"
 
-AnalysisGeneral::AnalysisGeneral() : Analysis("AnalysisGeneral"){
+AnalysisGeneral::AnalysisGeneral() : Analysis("AnalysisGeneral", 0.){
 
 	//number of bins 
 	int nbin = 100;

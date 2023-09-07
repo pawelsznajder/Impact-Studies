@@ -10,7 +10,8 @@
 #include "../../include/other/HashManager.h"
 #include "../../include/other/SubProcessType.h"
 
-AnalysisTSlope::AnalysisTSlope() : Analysis("AnalysisTSlope"){
+AnalysisTSlope::AnalysisTSlope(double targetLuminosity) : Analysis("AnalysisTSlope", targetLuminosity),
+	m_lumi(0.){
 
 	//set bin boundaries
 	setBinBoundaries();
@@ -24,10 +25,31 @@ AnalysisTSlope::~AnalysisTSlope(){
 
 void AnalysisTSlope::fill(DVCSEvent& event, double weight){
 
-	if(event.checkSubProcessType(SubProcessType::BH) && (! event.checkSubProcessType(SubProcessType::DVCS))) {
-		weight *= -1.;
+	//only comming from DVCS+INT+BH or BH sample
+	if(! ((
+		event.checkSubProcessType(SubProcessType::BH) && 
+		event.checkSubProcessType(SubProcessType::INT) && 
+		event.checkSubProcessType(SubProcessType::DVCS)
+		) || (
+		event.checkSubProcessType(SubProcessType::BH) && 
+		(! event.checkSubProcessType(SubProcessType::INT)) && 
+		(! event.checkSubProcessType(SubProcessType::DVCS))
+		))
+	) return;
+
+	//check if target luminosity reached, if yes, make weight negative
+	if( event.checkSubProcessType(SubProcessType::BH) && 
+		event.checkSubProcessType(SubProcessType::INT) && 
+		event.checkSubProcessType(SubProcessType::DVCS)
+	){
+		if(m_lumi >= m_targetLuminosity){
+			weight *= -1;
+		}else{
+			m_lumi += weight;
+		}
 	}
 
+	//fill
 	for(std::vector<BinTSlope>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
 
@@ -75,7 +97,7 @@ void AnalysisTSlope::plot(const std::string& path){
 	//===============================================
 
 	//loop over canvases for plotting xB vs. Q2 grid
-	for(size_t i = 0; i < 1; i++){
+	for(size_t i = 0; i < 4; i++){
 
 		//new
 		cans.push_back(new TCanvas(
@@ -122,6 +144,76 @@ void AnalysisTSlope::plot(const std::string& path){
 					(size_t(m_binRangesQ2.end() - itQ2) - 1) * m_binRangesXB.size())->SetLogy();
 
 				if(i == 0){
+
+					//histogram
+				  	TH1* h = itBin->getHDistributions().at(0);
+
+					 //check if not empty
+					 if(h != nullptr){
+
+						 //no stats
+						 h->SetStats(0);
+
+						 //draw
+						 if(h->GetEntries() > 0.) h->Draw();
+
+						 //draw associated function
+						 TObject* o = h->GetListOfFunctions()->First();
+
+						 if(o != 0){
+						 	static_cast<TF1*>(o)->Draw("same");
+						 }
+					 }
+				 }
+
+				if(i == 1){
+
+					//histogram
+				  	TH1* h = itBin->getHDistributions().at(1);
+
+					 //check if not empty
+					 if(h != nullptr){
+
+						 //no stats
+						 h->SetStats(0);
+
+						 //draw
+						 if(h->GetEntries() > 0.) h->Draw();
+
+						 //draw associated function
+						 TObject* o = h->GetListOfFunctions()->First();
+
+						 if(o != 0){
+						 	static_cast<TF1*>(o)->Draw("same");
+						 }
+					 }
+				 }
+
+
+				if(i == 2){
+
+					//histogram
+				  	TH1* h = itBin->getHTAcceptance();
+
+					 //check if not empty
+					 if(h != nullptr){
+
+						 //no stats
+						 h->SetStats(0);
+
+						 //draw
+						 h->Draw();
+
+						 //draw associated function
+						 TObject* o = h->GetListOfFunctions()->First();
+
+						 if(o != 0){
+						 	static_cast<TF1*>(o)->Draw("same");
+						 }
+					 }
+				 }
+
+				 if(i == 3){
 
 					//histogram
 				  	TH1* h = itBin->getHTSlope();
@@ -372,7 +464,7 @@ void AnalysisTSlope::initialiseBins(){
 			
 				m_bins.push_back(
 					BinTSlope(
-						*itXB, *itQ2, m_nBinsT, std::make_pair(0.2, 1.5)
+						*itXB, *itQ2, m_nBinsT, std::make_pair(0., 1.)
 					)
 				);
 		}

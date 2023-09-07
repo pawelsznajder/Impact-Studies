@@ -13,7 +13,7 @@ class AnalysisALU : public Analysis{
 public:
 
 	//constructor
-	AnalysisALU();
+	AnalysisALU(double targetLuminosity);
 
 	//destructor
 	virtual ~AnalysisALU();
@@ -50,5 +50,10 @@ private:
 
 	//analysis bins
 	std::vector<BinALU> m_bins;
+
+	//integrated luminosity for two polarisation states
+	double m_lumiM;
+	double m_lumiP;
+
 };
 #endif

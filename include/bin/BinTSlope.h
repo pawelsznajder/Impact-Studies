@@ -56,10 +56,13 @@ public:
 	double getMeanT() const;
 
 	//get histograms to store events
-	TH1* getHDistribution() const;
+	const std::vector<TH1*>& getHDistributions() const;
 
 	//get histograms for resulting t-slope
 	TH1* getHTSlope() const;
+
+	//get histograms for acceptance
+	TH1* getHTAcceptance() const;
 
 private:
 
@@ -71,9 +74,13 @@ private:
 	double m_sumQ2;		//sum of Q2 values.
 	double m_sumT;		//sum of t values.
 
-	TH1* m_hDistribution;	//histograms to store events
+	std::vector<TH1*> m_hDistributions;	//histograms to store events
 	TH1* m_hTSlope;			//histogram for resulting t-slope
+	TH1* m_hTAcceptance;	//histogram for acceptance
 	TF1* m_fFit;			//function for fitting 
+
+	double m_lumiALL;
+	double m_lumiBH;
 };
 
 #endif

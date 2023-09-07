@@ -13,7 +13,7 @@ class AnalysisTSlope : public Analysis{
 public:
 
 	//constructor
-	AnalysisTSlope();
+	AnalysisTSlope(double targetLuminosity);
 
 	//destructor
 	virtual ~AnalysisTSlope();
@@ -48,5 +48,8 @@ private:
 
 	//analysis bins
 	std::vector<BinTSlope> m_bins;
+
+	//integrated luminosity
+	double m_lumi;
 };
 #endif

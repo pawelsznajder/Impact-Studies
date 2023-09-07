@@ -43,20 +43,21 @@ int main(int argc, char* argv[]){
 	}
 
 	//target luminosity (in fb-1)
-	const double targetIntegratedLuminosityFb = 10;
-
-	//target luminosity (in nb-1)
-	const double targetIntegratedLuminosityNb = targetIntegratedLuminosityFb * 1E6;
+	const double targetIntegratedLuminosityFb = 10.;
 
 	std::cout << __func__ << " info: target integrated luminosity: " << 
 		targetIntegratedLuminosityFb << " [fb-1]" << std::endl;
+
+	//accumulated luminosity for two beam polarisation states
+	double integratedLuminosityFbALL[] = {0., 0.};
+	double integratedLuminosityFbBH[] = {0., 0.};
 
 	//analysis objects
 	AnalysisGeneral analysisGeneral;
 //	AnalysisEpIC analysisEpIC;
 	// AnalysisGeneralRC analysisGeneralRC;
-	AnalysisALU analysisALU;
-	// AnalysisTSlope analysisTSlope;
+	AnalysisALU analysisALU(targetIntegratedLuminosityFb);
+	AnalysisTSlope analysisTSlope(targetIntegratedLuminosityFb);
 
 	//vectors to store info from files
 	std::vector<std::pair<double, double> > crossSection;
@@ -64,9 +65,6 @@ int main(int argc, char* argv[]){
 	std::vector<int> beamPolarisation;
 	std::vector<bool> isRCSample;
 	std::vector<int> subProcessTypeMask;
-
-	double integratedLumiWithDVCS = 0.;
-	double integratedLumiWithoutDVCS = 0.;
 
 	//loop (read each files two times)
 	for(size_t loop = 0; loop < 2; loop++){
@@ -188,45 +186,45 @@ int main(int argc, char* argv[]){
 					//rc
 					isRCSample.push_back(thisIsRCSample);
 
-					//luminosity
-					if(subProcessTypeMask.back() & SubProcessType::DVCS){
-						integratedLumiWithDVCS += nEvents.back() / crossSection.back().first;
-					}else{
-						integratedLumiWithoutDVCS += nEvents.back() / crossSection.back().first;
-					}
-
 					//print status
 					std::cout << __func__ << " info: atribute: cross-section: " << crossSection.back().first 
-						<< " +/- " << crossSection.back().second << std::endl;
+						<< " +/- " << crossSection.back().second << " [nb]"<< std::endl;
 					std::cout << __func__ << " info: atribute: number of events: " << nEvents.back() << std::endl;
+					std::cout << __func__ << " info: integrated luminosity: " << nEvents.back()/crossSection.back().first/1.E6 << " [fb-1]" << std::endl;
 					std::cout << __func__ << " info: atribute: beam polarisation: " << beamPolarisation.back() << std::endl;
 					std::cout << __func__ << " info: atribute: sub process mask: " << 
 						((subProcessTypeMask.back() & SubProcessType::BH)?("BH "):("")) <<
 						((subProcessTypeMask.back() & SubProcessType::DVCS)?("DVCS "):("")) <<
 						((subProcessTypeMask.back() & SubProcessType::INT)?("INT "):("")) << std::endl;
 					std::cout << __func__ << " info: atribute: RC simulation: " << ((isRCSample.back())?("yes"):("no")) << std::endl;
+
+					//only ALL and BH
+					if(!(
+						(subProcessTypeMask.back() == SubProcessType::BH) || 
+						(subProcessTypeMask.back() == (SubProcessType::BH | SubProcessType::INT | SubProcessType::DVCS))
+						)
+					){
+						std::cout << __func__ << " error: only accepted files with subprocesses BH or ALL" << std::endl;
+						exit(0);
+					}
 				}
 
     			//read to process events ===============
     			if(loop == 1){
 
-    				//weight
-    				double thisWeight;
-
-    				if(subProcessTypeMask.at(iFile) & SubProcessType::DVCS){
-    					thisWeight = targetIntegratedLuminosityNb / integratedLumiWithDVCS;
-					}else{
-						thisWeight = targetIntegratedLuminosityNb / integratedLumiWithoutDVCS;
-					}
-
-					//counter
+    				//counter
 					size_t iEvent = 0;
 
 					//loop over events
 					for(;;){
 
 						//info
-						if(iEvent%10000 == 0) std::cout << __func__ << " info: process event number: " << iEvent << std::endl;
+						if(iEvent%10000 == 0){
+
+							std::cout << __func__ << " info: process event number: " << iEvent << std::endl;
+							std::cout << __func__ << " info: integrated luminosity: BH+INT+DVCS (-1/+1): " << integratedLuminosityFbALL[0] << '/' << integratedLuminosityFbALL[1] << 
+								" [fb-1], BH (-1/+1): " << integratedLuminosityFbBH[0] << '/' << integratedLuminosityFbBH[1] << std::endl; 
+						}
 
 						//event
 	                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
@@ -237,21 +235,53 @@ int main(int argc, char* argv[]){
 	          			inputFileRec.read_event(evtRec);
 
 	                	//if reading failed - exit loop
-	                	if(inputFile.failed() ) break;
-	                	if(inputFileRec.failed() ) break;
+	                	if(inputFile.failed()) break;
+	                	if(inputFileRec.failed()) break;
 
 	                	//DVCS event 
 	                	//TODO add beam charge and target polarisation
 	               	 	DVCSEvent dvcsEvent(evt, evtRec, beamPolarisation.at(iFile), -1, TVector3(0., 0., 0.), isRCSample.at(iFile), 
 	               	 		subProcessTypeMask.at(iFile));
-
-	               	 	//fill
+	       
+	     				//fill
 	               	 	analysisGeneral.fill(dvcsEvent, 1.);
-						// analysisEpIC.fill(dvcsEvent, 1.);
-	     //           	 	analysisGeneralRC.fill(dvcsEvent, 1.);
-	               	 	analysisALU.fill(dvcsEvent, 1.);
-						// analysisTSlope.fill(dvcsEvent, thisWeight);
-					
+		               	 	
+	               	 	//luminosity
+	               	 	size_t beamPolarisationState;
+
+	               	 	switch(beamPolarisation.at(iFile)){
+
+		               	 	case -1:{
+		               	 		beamPolarisationState = 0;
+		               	 		break;
+		               	 	}
+
+			               	case 1:{
+			               		beamPolarisationState = 1;
+			               	 	break;
+			               	}
+
+			               default:{
+			               		std::cout << __func__ << " error: wrong beam polarisation state, " << beamPolarisation.at(iFile) << std::endl;
+								exit(0);
+			               }
+	               	 	}
+
+						if(subProcessTypeMask.at(iFile) == (SubProcessType::BH | SubProcessType::INT | SubProcessType::DVCS)){
+							integratedLuminosityFbALL[beamPolarisationState] += 1/crossSection.at(iFile).first/1.E6;
+						}
+
+						if(subProcessTypeMask.at(iFile) == SubProcessType::BH){ 
+							integratedLuminosityFbBH[beamPolarisationState] += 1/crossSection.at(iFile).first/1.E6;
+						}
+
+						//weight
+						double weight = 1/crossSection.at(iFile).first/1.E6;
+
+						//fill
+						analysisALU.fill(dvcsEvent, weight);
+						analysisTSlope.fill(dvcsEvent, weight);
+
 						//counter
 	               	 	iEvent++;
 					}
@@ -266,20 +296,27 @@ int main(int argc, char* argv[]){
 			}
 		}
 	}
+
+	// return 0;
    
 	//analyse
 	analysisGeneral.analyse();
 	//analysisEpIC.analyse();
 	// analysisGeneralRC.analyse();
 	analysisALU.analyse();
-	// analysisTSlope.analyse();
+	analysisTSlope.analyse();
 
 	//print
 	analysisGeneral.plot("analysisGeneral.pdf");
 	//analysisEpIC.plot("analysisEpIC.pdf");
 	// analysisGeneralRC.plot("analysisGeneralRC.pdf");
 	analysisALU.plot("analysisALU.pdf");
-	// analysisTSlope.plot("analysisTSlope.pdf");
+	analysisTSlope.plot("analysisTSlope.pdf");
+
+	std::cout << __func__ << ": info: target luminosity: " << 
+		((integratedLuminosityFbALL[0] >= targetIntegratedLuminosityFb && integratedLuminosityFbALL[1] >= targetIntegratedLuminosityFb &&
+			integratedLuminosityFbBH[0] >= targetIntegratedLuminosityFb && integratedLuminosityFbBH[1] >= targetIntegratedLuminosityFb)?
+		(" reached"):(" NOT REACHED!!!")) << std::endl;
 
 	return 0;
 }
