@@ -65,9 +65,6 @@ public:
         //get phiS
         double getPhiS(KinematicsType::Type type = KinematicsType::Observed) const;
 
-        //get 4-mom of scattered proton
-        const TLorentzVector& getPOut(KinematicsType::Type type = KinematicsType::Observed) const;
-
         //get beam polarisation
         int getBeamPolarisation() const;
 

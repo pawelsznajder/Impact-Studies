@@ -603,10 +603,6 @@ double DVCSEvent::getPhiS(KinematicsType::Type type) const{
         return getPhiPhiS(1, getFourMomentum(m_gammaStar, type), getFourMomentum(m_pIn, type), getFourMomentum(m_eIn, type), getFourMomentum(m_eOut, type), getFourMomentum(m_gammaOut, type));
 }
 
-const TLorentzVector& DVCSEvent::getPOut(KinematicsType::Type type) const{
-        return getFourMomentum(m_pOut, type);
-}
-
 int DVCSEvent::getBeamPolarisation() const{
         return m_beamPolarisation;
 }
