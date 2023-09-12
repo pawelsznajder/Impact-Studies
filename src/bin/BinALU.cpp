@@ -110,11 +110,14 @@ void BinALU::fill(DVCSEvent& event, double weight){
 }
 
 void BinALU::analyse(){
+
+	//print
+	std::cout << "=================================================================" << std::endl;
 	
 	//run for parent class
 	Bin::analyse();
 
-	//skip bins with low entry
+	//skip bins with low entry count
 	if(m_nEvents < 100){
 		return;
 	}
@@ -152,11 +155,11 @@ void BinALU::print() const{
 	Bin::print();
 
 	//print
-	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+	std::cout << __func__ << " debug: " << 
 		"range xB: min: " << m_rangeXB.first << " max: " << m_rangeXB.second << " mean (from events): " << getMeanXB() << std::endl;
-	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+	std::cout << __func__ << " debug: " << 
 		"range Q2: min: " << m_rangeQ2.first << " max: " << m_rangeQ2.second << " mean (from events): " << getMeanQ2() << std::endl;
-	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+	std::cout << __func__ << 
 		"range |t|: min: " << m_rangeT.first << " max: " << m_rangeT.second << " mean (from events): " << getMeanT() << std::endl;
 }
 
