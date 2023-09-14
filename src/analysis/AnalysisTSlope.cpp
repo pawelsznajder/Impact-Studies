@@ -11,7 +11,7 @@
 #include "../../include/other/SubProcessType.h"
 
 AnalysisTSlope::AnalysisTSlope(double targetLuminosity) : Analysis("AnalysisTSlope", targetLuminosity),
-	m_lumi(0.){
+	m_lumiALL(0.), m_lumiBH(0.){
 
 	//set bin boundaries
 	setBinBoundaries();
@@ -42,11 +42,19 @@ void AnalysisTSlope::fill(DVCSEvent& event, double weight){
 		event.checkSubProcessType(SubProcessType::INT) && 
 		event.checkSubProcessType(SubProcessType::DVCS)
 	){
-		if(m_lumi >= m_targetLuminosity){
+		m_lumiALL += weight;
+
+		if(m_lumiALL >= m_targetLuminosity){
 			weight *= -1;
-		}else{
-			m_lumi += weight;
 		}
+	}
+
+	//check if target luminosity reached, if yes, make weight negative
+	if( event.checkSubProcessType(SubProcessType::BH) && 
+		(! event.checkSubProcessType(SubProcessType::INT)) && 
+		(! event.checkSubProcessType(SubProcessType::DVCS))
+	){
+		m_lumiBH += weight;
 	}
 
 	//fill
@@ -70,7 +78,7 @@ void AnalysisTSlope::analyse(){
 		it != m_bins.end(); it++){
 
 		//make analysis
-		it->analyse();
+		it->analyse(m_lumiALL, m_lumiBH);
 
 		//get results
 		FitResult* fitResult = it->getFitResult();

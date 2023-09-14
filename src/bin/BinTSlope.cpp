@@ -88,7 +88,6 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 		if(weight > 0.){
 
 			if(event.isReconstructed()) m_hDistributions.at(0)->Fill(-1 * event.getT());
-			m_lumiALL += weight;
 
 			//kinematics
 			Bin::fill(event, weight);
@@ -100,6 +99,8 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 
 		m_hDistributions.at(2)->Fill(-1 * event.getT(KinematicsType::True));
 		if(event.isReconstructed()) m_hDistributions.at(3)->Fill(-1 * event.getT());
+
+		m_lumiALL += fabs(weight);
 	}
 	
 	//if BH
@@ -114,34 +115,66 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 }
 
 void BinTSlope::analyse(){
+
+	std::cout << "error: " << __func__ << ": do not use this function" << std::endl;
+	exit(0);
+}
+
+void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
+
+	//print
+	std::cout << "=================================================================" << std::endl;
 	
 	//run for parent class
 	Bin::analyse();
 
-	//skip bins with low entry
+	//skip bins with low entry count
 	if(m_nEvents < 2000){
 		return;
 	}
 
+	//labels
+	std::stringstream ss;
+
 	//make t-slope histogram
 	m_hTSlope = static_cast<TH1*>(m_hDistributions.at(0)->Clone());
-	m_hTSlope->SetTitle("DVCS corrected");
+
+	ss.clear();
+	ss << "DVCS corrected " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+			m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
+	m_hTSlope->SetTitle(ss.str().c_str());
 
 	//calculate acceptance
 	m_hTAcceptance = static_cast<TH1*>(m_hDistributions.at(3)->Clone());
-	m_hTAcceptance->SetTitle("ALL acceptance");
+
+	ss.clear();
+	ss << "ALL acceptance " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+			m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
+	m_hTAcceptance->SetTitle(ss.str().c_str());
+
 	m_hTAcceptance->Divide(m_hDistributions.at(2));
 
+	//apply acceptance
 	m_hTSlope->Divide(m_hTAcceptance);
 
+	//get cumulative cross-sections
+	double ALLCS = m_hTSlope->Integral() / totalLumiALL;
+	double BHCS = m_hDistributions.at(1)->Integral() / totalLumiBH;
+
 	//subtract BH
-	m_hTSlope->Add(m_hDistributions.at(1), -1 * m_lumiALL/m_lumiBH);
+	m_hTSlope->Scale(1. / totalLumiALL);
+	m_hTSlope->Add(m_hDistributions.at(1), -1 / totalLumiBH);
+
+	std::cout << "debug: " << __func__ << ":" <<
+		" BH: event fraction/total_lumi: " << m_lumiBH/totalLumiBH << "/" << totalLumiBH << 
+		" ALL: event fraction/total_lumi: " << m_lumiALL/totalLumiALL << "/" << totalLumiALL << 
+		" BH fraction: " << BHCS/ALLCS << std::endl;
 
 	//fit
 	//fit options: 
 	//0: do not attempt to draw function
 
-	int statusCode = int(m_hTSlope->Fit(m_fFit, "0B"));
+	int statusCode = int(m_hTSlope->Fit(m_fFit, "0IME", "", 0.1, 1.));
 	//int statusCode = int(m_hTSlope->Fit(m_fFit, "I"));
 
 	//store results
@@ -168,9 +201,9 @@ void BinTSlope::print() const{
 	Bin::print();
 
 	//print
-	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+	std::cout << __func__ << " debug: " << 
 		"range xB: min: " << m_rangeXB.first << " max: " << m_rangeXB.second << " mean (from events): " << getMeanXB() << std::endl;
-	std::cout << getClassName() << "::" << __func__ << " debug: " << 
+	std::cout << __func__ << " debug: " << 
 		"range Q2: min: " << m_rangeQ2.first << " max: " << m_rangeQ2.second << " mean (from events): " << getMeanQ2() << std::endl;
 }
 

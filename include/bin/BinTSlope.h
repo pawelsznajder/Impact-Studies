@@ -37,6 +37,9 @@ public:
 	//analyse
 	virtual void analyse();
 
+	//analyse
+	void analyse(double totalLumiALL, double totalLumiBH);
+
 	//get range xB
 	const std::pair<double, double>& getRangeXB() const;
 

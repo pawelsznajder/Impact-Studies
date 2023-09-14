@@ -50,6 +50,7 @@ private:
 	std::vector<BinTSlope> m_bins;
 
 	//integrated luminosity
-	double m_lumi;
+	double m_lumiALL;
+	double m_lumiBH;
 };
 #endif
