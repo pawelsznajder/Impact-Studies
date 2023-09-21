@@ -106,16 +106,16 @@ int main(int argc, char* argv[]){
 
 				//get path
 				#ifdef __USE_BOOST__
-					std::string path = dirEntry->path().string();
+					std::string pathGen = dirEntry->path().string();
 				#else
-					std::string path = dirEntry.path().string();
+					std::string pathGen = dirEntry.path().string();
 				#endif
 
 				//skip those with extension ".reconstructed.txt"
-				if(std::regex_search(path, std::regex("\\.reconstructed\\.txt$"))) continue;
+				if(std::regex_search(pathGen, std::regex("\\.reconstructed\\.txt$"))) continue;
 
 				//check if ".reconstructed.txt" exists
-				std::string pathRec = std::regex_replace(path, std::regex("\\.txt$"), ".reconstructed.txt");
+				std::string pathRec = std::regex_replace(pathGen, std::regex("\\.txt$"), ".reconstructed.txt");
 				
 				if(! fs::exists(pathRec)){
 
@@ -125,12 +125,12 @@ int main(int argc, char* argv[]){
 
 				//print
 				std::cout << __func__ << 
-					" info: reading: " << path << " and " << pathRec << ((loop == 0)?(" (init) "):( " (analyse) ")) << 
+					" info: reading: " << pathRec << " and " << pathGen << ((loop == 0)?(" (init) "):( " (analyse) ")) << 
 					"index: " << iFile << std::endl;
 
 				//open
-				HepMC3::ReaderAscii inputFile(path);
 				HepMC3::ReaderAscii inputFileRec(pathRec);
+				HepMC3::ReaderAscii inputFileGen(pathGen);
 
 				//read to collect atributes ===============
 				if(loop == 0){
@@ -146,7 +146,7 @@ int main(int argc, char* argv[]){
 	                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
 	               
 	               		//read
-	          			inputFile.read_event(evt);
+	          			inputFileGen.read_event(evt);
 
 	          			//if the number of particles is not fixed, we have RC sample
 	          			if(evt.particles().size() != 0 && evt.particles().size() != lastParticleSize){
@@ -159,11 +159,11 @@ int main(int argc, char* argv[]){
 	          			}
 
 	                	//if reading failed - exit loop
-	                	if(inputFile.failed() ) break;
+	                	if(inputFileGen.failed() ) break;
 					}
 
 					//run info
-					std::shared_ptr<HepMC3::GenRunInfo> runInfo = inputFile.run_info();
+					std::shared_ptr<HepMC3::GenRunInfo> runInfo = inputFileGen.run_info();
 
 					crossSection.push_back(
 						std::make_pair( 
@@ -227,20 +227,20 @@ int main(int argc, char* argv[]){
 						}
 
 						//event
-	                	HepMC3::GenEvent evt(Units::GEV,Units::MM);
-	                	HepMC3::GenEvent evtRec(Units::GEV,Units::MM);
-	               
+						HepMC3::GenEvent evtRec(Units::GEV,Units::MM);
+	                	HepMC3::GenEvent evtGen(Units::GEV,Units::MM);
+	              	               
 	               		//read
-	          			inputFile.read_event(evt);
-	          			inputFileRec.read_event(evtRec);
-
+	               		inputFileRec.read_event(evtRec);
+	          			inputFileGen.read_event(evtGen);
+	          			
 	                	//if reading failed - exit loop
-	                	if(inputFile.failed()) break;
 	                	if(inputFileRec.failed()) break;
-
+	                	if(inputFileGen.failed()) break;
+	                	
 	                	//DVCS event 
 	                	//TODO add beam charge and target polarisation
-	               	 	DVCSEvent dvcsEvent(evt, evtRec, beamPolarisation.at(iFile), -1, TVector3(0., 0., 0.), isRCSample.at(iFile), 
+	               	 	DVCSEvent dvcsEvent(evtRec, evtGen, beamPolarisation.at(iFile), -1, TVector3(0., 0., 0.), isRCSample.at(iFile), 
 	               	 		subProcessTypeMask.at(iFile));
 	       
 	     				//fill
@@ -291,8 +291,8 @@ int main(int argc, char* argv[]){
     			iFile++;
 
 				//close
-				inputFile.close();
 				inputFileRec.close();
+				inputFileGen.close();
 			}
 		}
 	}

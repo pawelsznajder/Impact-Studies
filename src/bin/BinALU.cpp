@@ -23,14 +23,37 @@ BinALU::BinALU(
 	m_rangeT = checkRange(rangeT);
 	m_rangePhi = checkRange(rangePhi);
 
-	//labes
+	//labels
 	std::stringstream ss;
 
-	ss << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
-		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
- 
 	//make histograms
+	ss.clear();
+	ss << "observed: " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
+	
 	m_hDistributions = std::make_pair(
+		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
+			nPhiBins, rangePhi.first, rangePhi.second), 
+		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
+			nPhiBins, rangePhi.first, rangePhi.second)
+	);
+
+	ss.clear();
+	ss << "true: " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
+
+	m_hDistributionsTrue = std::make_pair(
+		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
+			nPhiBins, rangePhi.first, rangePhi.second), 
+		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
+			nPhiBins, rangePhi.first, rangePhi.second)
+	);
+
+	ss.clear();
+	ss << "born: " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
+
+	m_hDistributionsBorn = std::make_pair(
 		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
 			nPhiBins, rangePhi.first, rangePhi.second), 
 		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
@@ -40,6 +63,12 @@ BinALU::BinALU(
 	//set sumw2
 	m_hDistributions.first->Sumw2();
 	m_hDistributions.second->Sumw2();
+
+	m_hDistributionsTrue.first->Sumw2();
+	m_hDistributionsTrue.second->Sumw2();
+
+	m_hDistributionsBorn.first->Sumw2();
+	m_hDistributionsBorn.second->Sumw2();
 
 	//function for fitting
 	m_fFit = new TF1((HashManager::getInstance()->getHash()).c_str(), "[0]*sin(x)", 0., 2 * M_PI);
@@ -68,6 +97,9 @@ void BinALU::reset(){
 
 	//reset histograms
 	m_hDistributions = std::make_pair(nullptr, nullptr);
+	m_hDistributionsTrue = std::make_pair(nullptr, nullptr);
+	m_hDistributionsBorn = std::make_pair(nullptr, nullptr);
+	m_hDistributionsRC = std::make_pair(nullptr, nullptr);
 	m_hAsymmetry = nullptr;
 }
 
@@ -82,14 +114,18 @@ void BinALU::fill(DVCSEvent& event, double weight){
 
 	 	case -1:{
 
-	 		m_hDistributions.first->Fill(event.getPhi());
+	 		if(weight > 0.) m_hDistributions.first->Fill(event.getPhi());
+	 		m_hDistributionsTrue.first->Fill(event.getPhi(KinematicsType::True));
+	 		m_hDistributionsBorn.first->Fill(event.getPhi(KinematicsType::Born));
 
 	 		break;
 	 	}
 
 	   	case 1:{
 
-	   		m_hDistributions.second->Fill(event.getPhi());
+	   		if(weight > 0.) m_hDistributions.second->Fill(event.getPhi());
+	   		m_hDistributionsTrue.second->Fill(event.getPhi(KinematicsType::True));
+	   		m_hDistributionsBorn.second->Fill(event.getPhi(KinematicsType::Born));
 
 	   	 	break;
 	   	}
@@ -101,12 +137,15 @@ void BinALU::fill(DVCSEvent& event, double weight){
 	}
 
 	//kinematics
-	Bin::fill(event, weight);
+	if(weight > 0.){
 
-	m_sumXB += weight * event.getXB();
-	m_sumQ2 += weight * event.getQ2();
-	m_sumT += weight * event.getT();
-	m_sumPhi += weight * event.getPhi();
+		Bin::fill(event, weight);
+
+		m_sumXB += weight * event.getXB();
+		m_sumQ2 += weight * event.getQ2();
+		m_sumT += weight * event.getT();
+		m_sumPhi += weight * event.getPhi();
+	}
 }
 
 void BinALU::analyse(){
@@ -121,6 +160,13 @@ void BinALU::analyse(){
 	if(m_nEvents < 100){
 		return;
 	}
+
+	//calculate RC
+	m_hDistributionsRC.first = static_cast<TH1*>(m_hDistributionsBorn.first->Clone());
+	m_hDistributionsRC.second = static_cast<TH1*>(m_hDistributionsBorn.second->Clone());
+
+	m_hDistributionsRC.first->Divide(m_hDistributionsTrue.first);
+	m_hDistributionsRC.second->Divide(m_hDistributionsTrue.second);
 
 	//make asymmetry histogram
 	m_hAsymmetry = 
@@ -197,6 +243,18 @@ double BinALU::getMeanPhi() const{
 
 const std::pair<TH1*, TH1*>& BinALU::getHDistributions() const{
 	return m_hDistributions;
+}
+
+const std::pair<TH1*, TH1*>& BinALU::getHDistributionsTrue() const{
+	return m_hDistributionsTrue;
+}
+
+const std::pair<TH1*, TH1*>& BinALU::getHDistributionsBorn() const{
+	return m_hDistributionsBorn;
+}
+
+const std::pair<TH1*, TH1*>& BinALU::getHDistributionsRC() const{
+	return m_hDistributionsRC;
 }
 
 TH1* BinALU::getHAsymmetry() const{

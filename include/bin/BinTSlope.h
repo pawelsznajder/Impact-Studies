@@ -67,6 +67,9 @@ public:
 	//get histograms for acceptance
 	TH1* getHTAcceptance() const;
 
+	//get histograms for acceptance
+	TH1* getHTRC() const;
+
 private:
 
 	std::pair<double, double> m_rangeXB;	//xB range
@@ -80,6 +83,7 @@ private:
 	std::vector<TH1*> m_hDistributions;	//histograms to store events
 	TH1* m_hTSlope;			//histogram for resulting t-slope
 	TH1* m_hTAcceptance;	//histogram for acceptance
+	TH1* m_hTRC;			//histogram for radiative corrections
 	TF1* m_fFit;			//function for fitting 
 
 	double m_lumiALL;

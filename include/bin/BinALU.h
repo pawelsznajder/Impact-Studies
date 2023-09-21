@@ -65,6 +65,15 @@ public:
 	//get histograms to store events
 	const std::pair<TH1*, TH1*>& getHDistributions() const;
 
+	//get histograms to store events (True)
+	const std::pair<TH1*, TH1*>& getHDistributionsTrue() const;
+
+	//get histograms to store events (Born)
+	const std::pair<TH1*, TH1*>& getHDistributionsBorn() const;
+
+	//get histograms to store events (Born/True)
+	const std::pair<TH1*, TH1*>& getHDistributionsRC() const;
+
 	//get histograms for resulting asymmetry
 	TH1* getHAsymmetry() const;
 
@@ -80,9 +89,12 @@ private:
 	double m_sumT;		//sum of t values.
 	double m_sumPhi;	//sum of phi values.
 
-	std::pair<TH1*, TH1*> m_hDistributions;	//histograms to store events
-	TH1* m_hAsymmetry;						//histogram for resulting asymmetry
-	TF1* m_fFit;							//function for fitting 
+	std::pair<TH1*, TH1*> m_hDistributions;		//histograms to store events
+	std::pair<TH1*, TH1*> m_hDistributionsTrue;	//histograms to store events (True kinematics)
+	std::pair<TH1*, TH1*> m_hDistributionsBorn;	//histograms to store events (Born kinematics)
+	std::pair<TH1*, TH1*> m_hDistributionsRC;	//histograms to Born/True ratio
+	TH1* m_hAsymmetry;							//histogram for resulting asymmetry
+	TF1* m_fFit;								//function for fitting 
 };
 
 #endif

@@ -118,28 +118,28 @@ private:
         TLorentzVector getGammaFSR(const GenEvent& evt, KinematicsType::Type type) const;
 
         //set four-momentum in a pair for specific kinematic type
-        void setFourMomentum(std::pair<TLorentzVector, TLorentzVector>& inputPair, KinematicsType::Type type, const TLorentzVector& mom) const;
+        void setFourMomentum(std::tuple<TLorentzVector, TLorentzVector, TLorentzVector>& input, KinematicsType::Type type, const TLorentzVector& mom) const;
 
         //get reference of four-momentum corresponding to specific kinematic type
-        const TLorentzVector& getFourMomentum(const std::pair<TLorentzVector, TLorentzVector>& inputPair, KinematicsType::Type type) const;
+        const TLorentzVector& getFourMomentum(const std::tuple<TLorentzVector, TLorentzVector, TLorentzVector>& input, KinematicsType::Type type) const;
 
         //print error message and terminate program if processing of events is not successful 
         void printError(const std::string& functionName) const;
 
         //check if reconstructed and improve information
-        bool improveReconstruction(std::pair<TLorentzVector, TLorentzVector>& lvs, double mass) const;
+        bool improveReconstruction(std::tuple<TLorentzVector, TLorentzVector, TLorentzVector>& lvs, double mass) const;
    
         //four-momenta
-        std::pair<TLorentzVector, TLorentzVector> m_eIn;
-        std::pair<TLorentzVector, TLorentzVector> m_eOut;
-        std::pair<TLorentzVector, TLorentzVector> m_pIn;
-        std::pair<TLorentzVector, TLorentzVector> m_pOut;
-        std::pair<TLorentzVector, TLorentzVector> m_gammaOut;
+        std::tuple<TLorentzVector, TLorentzVector, TLorentzVector> m_eIn;
+        std::tuple<TLorentzVector, TLorentzVector, TLorentzVector> m_eOut;
+        std::tuple<TLorentzVector, TLorentzVector, TLorentzVector> m_pIn;
+        std::tuple<TLorentzVector, TLorentzVector, TLorentzVector> m_pOut;
+        std::tuple<TLorentzVector, TLorentzVector, TLorentzVector> m_gammaOut;
 
-        std::pair<TLorentzVector, TLorentzVector> m_gammaStar;
+        std::tuple<TLorentzVector, TLorentzVector, TLorentzVector> m_gammaStar;
 
-        std::pair<TLorentzVector, TLorentzVector> m_gammaISR;
-        std::pair<TLorentzVector, TLorentzVector> m_gammaFSR;
+        std::tuple<TLorentzVector, TLorentzVector, TLorentzVector> m_gammaISR;
+        std::tuple<TLorentzVector, TLorentzVector, TLorentzVector> m_gammaFSR;
 
         //beam polarisation
         int m_beamPolarisation;

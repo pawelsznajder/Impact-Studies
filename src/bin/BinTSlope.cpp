@@ -21,15 +21,18 @@ BinTSlope::BinTSlope(
 	m_rangeT = checkRange(rangeT);
 
 	//make histograms
- 	for(size_t i = 0; i < 4; i++){
+ 	for(size_t i = 0; i < 6; i++){
 
  		//labels
 		std::stringstream ss;
 
 		if(i == 0) ss << "ALL rec lumi: ";
-		if(i == 1) ss << "BH gen: ";
-		if(i == 2) ss << "ALL gen: ";
+		if(i == 1) ss << "BH true: ";
+		if(i == 2) ss << "ALL true: ";
 		if(i == 3) ss << "ALL rec: ";
+
+		if(i == 4) ss << "BH born: ";
+		if(i == 5) ss << "ALL born: ";
 
 		ss << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
 			m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
@@ -75,6 +78,7 @@ void BinTSlope::reset(){
 	m_hDistributions.clear();
 	m_hTSlope = nullptr;
 	m_hTAcceptance = nullptr;
+	m_hTRC = nullptr;
 }
 
 void BinTSlope::fill(DVCSEvent& event, double weight){
@@ -99,6 +103,7 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 
 		m_hDistributions.at(2)->Fill(-1 * event.getT(KinematicsType::True));
 		if(event.isReconstructed()) m_hDistributions.at(3)->Fill(-1 * event.getT());
+		m_hDistributions.at(5)->Fill(-1 * event.getT(KinematicsType::Born));
 
 		m_lumiALL += fabs(weight);
 	}
@@ -110,6 +115,7 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 	){
 
 		m_hDistributions.at(1)->Fill(-1 * event.getT(KinematicsType::True));
+		m_hDistributions.at(4)->Fill(-1 * event.getT(KinematicsType::Born));
 		m_lumiBH += weight;
 	}
 }
@@ -169,6 +175,23 @@ void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
 		" BH: event fraction/total_lumi: " << m_lumiBH/totalLumiBH << "/" << totalLumiBH << 
 		" ALL: event fraction/total_lumi: " << m_lumiALL/totalLumiALL << "/" << totalLumiALL << 
 		" BH fraction: " << BHCS/ALLCS << std::endl;
+
+	//radiative correction
+	m_hTRC = static_cast<TH1*>(m_hDistributions.at(2)->Clone());
+
+	ss.clear();
+	ss << "DVCS RC " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+			m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
+	m_hTRC->SetTitle(ss.str().c_str());
+
+	m_hTRC->Scale(1. / totalLumiALL); //TODO DIFFERENT LUMIS FOR TRUE AND BORN?
+	m_hTRC->Add(m_hDistributions.at(1), -1 / totalLumiBH);
+
+	TH1* tmpH = static_cast<TH1*>(m_hDistributions.at(5)->Clone());
+	tmpH->Scale(1. / totalLumiALL); //TODO DIFFERENT LUMIS FOR TRUE AND BORN?
+	tmpH->Add(m_hDistributions.at(4), -1 / totalLumiBH);
+
+	m_hTRC->Divide(tmpH);
 
 	//fit
 	//fit options: 
@@ -241,4 +264,8 @@ TH1* BinTSlope::getHTSlope() const{
 
 TH1* BinTSlope::getHTAcceptance() const{
 	return m_hTAcceptance;
+}
+
+TH1* BinTSlope::getHTRC() const{
+	return m_hTRC;
 }

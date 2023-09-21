@@ -34,16 +34,22 @@ void AnalysisALU::fill(DVCSEvent& event, double weight){
 
    	 	case -1:{
 
-   	 		if(m_lumiM >= m_targetLuminosity/2.) return;
    	 		m_lumiM += weight;
+
+			if(m_lumiM >= m_targetLuminosity/2.){
+				weight *= -1;
+			}
 
    	 		break;
    	 	}
 
        	case 1:{
 
-       		if(m_lumiP >= m_targetLuminosity/2.) return;
    	 		m_lumiP += weight;
+
+			if(m_lumiP >= m_targetLuminosity/2.){
+				weight *= -1;
+			}
 
        	 	break;
        	}
@@ -111,7 +117,7 @@ void AnalysisALU::plot(const std::string& path){
 		ss << itT->first << " #leq |t| < " << itT->second;
 
 		//loop over canvases for this t bin
-		for(size_t i = 0; i < 2; i++){
+		for(size_t i = 0; i < 4; i++){
 
 			//new
 			cans.push_back(
@@ -182,7 +188,56 @@ void AnalysisALU::plot(const std::string& path){
 						h2->Draw("same");
 					}
 
-					 if(i == 1){
+					if(i == 1){
+
+						//histograms
+						TH1* h1 = itBin->getHDistributionsBorn().first;
+						TH1* h2 = itBin->getHDistributionsBorn().second;
+
+						//set minima
+						h1->SetMinimum(0.);
+						h2->SetMinimum(0.);
+
+						//colors
+						h1->SetLineColor(2);
+						h2->SetLineColor(4);
+
+						//no stats
+						h1->SetStats(0);
+						h2->SetStats(0);
+
+						//draw
+						h1->Draw();
+						h2->Draw("same");
+					}
+
+
+					if(i == 2){
+
+						//histograms
+						TH1* h1 = itBin->getHDistributionsRC().first;
+						TH1* h2 = itBin->getHDistributionsRC().second;
+
+						if(h1 == nullptr || h2 == nullptr) continue;
+
+						//set minima
+						h1->SetMinimum(0.);
+						h2->SetMinimum(0.);
+
+						//colors
+						h1->SetLineColor(2);
+						h2->SetLineColor(4);
+
+						//no stats
+						h1->SetStats(0);
+						h2->SetStats(0);
+
+						//draw
+						h1->Draw();
+						h2->Draw("same");
+					}
+
+					if(i == 3){
 
 					 	//histogram
 					 	TH1* h = itBin->getHAsymmetry();

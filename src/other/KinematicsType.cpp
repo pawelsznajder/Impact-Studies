@@ -18,11 +18,14 @@ std::string KinematicsType::toString() const {
 
   switch (m_type) {
 
+  case Observed:
+    return "Observed";
+    break;
   case True:
     return "True";
     break;
-  case Observed:
-    return "Observed";
+  case Born:
+    return "Born";
     break;
 
   default:

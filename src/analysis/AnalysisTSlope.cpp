@@ -105,7 +105,7 @@ void AnalysisTSlope::plot(const std::string& path){
 	//===============================================
 
 	//loop over canvases for plotting xB vs. Q2 grid
-	for(size_t i = 0; i < 4; i++){
+	for(size_t i = 0; i < 5; i++){
 
 		//new
 		cans.push_back(new TCanvas(
@@ -164,13 +164,6 @@ void AnalysisTSlope::plot(const std::string& path){
 
 						 //draw
 						 if(h->GetEntries() > 0.) h->Draw();
-
-						 //draw associated function
-						 TObject* o = h->GetListOfFunctions()->First();
-
-						 if(o != 0){
-						 	static_cast<TF1*>(o)->Draw("same");
-						 }
 					 }
 				 }
 
@@ -187,13 +180,6 @@ void AnalysisTSlope::plot(const std::string& path){
 
 						 //draw
 						 if(h->GetEntries() > 0.) h->Draw();
-
-						 //draw associated function
-						 TObject* o = h->GetListOfFunctions()->First();
-
-						 if(o != 0){
-						 	static_cast<TF1*>(o)->Draw("same");
-						 }
 					 }
 				 }
 
@@ -211,17 +197,26 @@ void AnalysisTSlope::plot(const std::string& path){
 
 						 //draw
 						 h->Draw();
+					 }
+				}
 
-						 //draw associated function
-						 TObject* o = h->GetListOfFunctions()->First();
+				if(i == 3){
 
-						 if(o != 0){
-						 	static_cast<TF1*>(o)->Draw("same");
-						 }
+					//histogram
+				  	TH1* h = itBin->getHTRC();
+
+					 //check if not empty
+					 if(h != nullptr){
+
+						 //no stats
+						 h->SetStats(0);
+
+						 //draw
+						 h->Draw();
 					 }
 				 }
 
-				 if(i == 3){
+				 if(i == 4){
 
 					//histogram
 				  	TH1* h = itBin->getHTSlope();

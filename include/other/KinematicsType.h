@@ -19,8 +19,9 @@ public:
 
     UNDEFINED = 0, //!< Undefined type.
 
-    True = 1, //!<  True kinematics of the process (entering the evaluation of cross-section)
-    Observed = 2, //!<  Observed kinematics
+    Observed = 1, //!<  Observed kinematics.
+    True = 2, //!<  True kinematics (corresponding to observed one).
+    Born = 3 //!<  True Born kinematics of the process (entering the evaluation of cross-section).
   };
 
   /**

@@ -7,14 +7,20 @@
 
 using namespace HepMC3;
 
-DVCSEvent::DVCSEvent(const GenEvent& evtGen, const GenEvent& evtRec, int beamPolarisation, int beamCharge,
+DVCSEvent::DVCSEvent(const GenEvent& evtRec, const GenEvent& evtGen, int beamPolarisation, int beamCharge,
                 const TVector3& targetPolarisation, bool isRCSample, int subProcessTypeMask) : BaseObject("DVCSEvent"){
 
         //four-momenta
         for(size_t i = 0; i < 2; i++){
 
-                KinematicsType::Type type = (i == 0)?(KinematicsType::True):(KinematicsType::Observed);
-                const GenEvent& evt = (i == 0)?(evtGen):(evtRec);
+                KinematicsType::Type type;
+
+                switch(i){
+                        case 0: {type = KinematicsType::Observed; break;}
+                        case 1: {type = KinematicsType::True; break;}
+                }
+
+                const GenEvent& evt = (i == 0)?(evtRec):(evtGen);
 
                 setFourMomentum(m_eIn, type, getEIn(evt, type));
                 setFourMomentum(m_eOut, type, getEOut(evt, type));
@@ -25,6 +31,26 @@ DVCSEvent::DVCSEvent(const GenEvent& evtGen, const GenEvent& evtRec, int beamPol
                 setFourMomentum(m_gammaISR, type, getGammaISR(evt, type));
                 setFourMomentum(m_gammaFSR, type, getGammaFSR(evt, type));
         }
+
+        if(getFourMomentum(m_gammaISR, KinematicsType::True) != TLorentzVector()){
+                setFourMomentum(m_eIn, KinematicsType::Born, getFourMomentum(m_eIn, KinematicsType::True) - getFourMomentum(m_gammaISR, KinematicsType::True));
+        }else{
+                setFourMomentum(m_eIn, KinematicsType::Born, getFourMomentum(m_eIn, KinematicsType::True));
+        }
+
+        if(getFourMomentum(m_gammaFSR, KinematicsType::True) != TLorentzVector()){
+                setFourMomentum(m_eOut, KinematicsType::Born, getFourMomentum(m_eOut, KinematicsType::True) + getFourMomentum(m_gammaFSR, KinematicsType::True));
+        }else{
+                setFourMomentum(m_eOut, KinematicsType::Born, getFourMomentum(m_eOut, KinematicsType::True));
+        }
+
+        setFourMomentum(m_pIn, KinematicsType::Born, getFourMomentum(m_pIn, KinematicsType::True));
+        setFourMomentum(m_pOut, KinematicsType::Born, getFourMomentum(m_pOut, KinematicsType::True));
+        setFourMomentum(m_gammaOut, KinematicsType::Born, getFourMomentum(m_gammaOut, KinematicsType::True));
+
+        setFourMomentum(m_gammaISR, KinematicsType::Born, TLorentzVector());
+        setFourMomentum(m_gammaFSR, KinematicsType::Born, TLorentzVector());
+
 
         //in the case of reconstruction assign mass for charged particles and momentum for photons
         //check if reconstructed
@@ -43,9 +69,15 @@ DVCSEvent::DVCSEvent(const GenEvent& evtGen, const GenEvent& evtRec, int beamPol
         improveReconstruction(m_gammaFSR, 0.); 
 
         //four-momenta of virtual-photon
-        for(size_t i = 0; i < 2; i++){
+        for(size_t i = 0; i < 3; i++){
 
-                KinematicsType::Type type = (i == 0)?(KinematicsType::True):(KinematicsType::Observed);
+                KinematicsType::Type type;
+
+                switch(i){
+                        case 0: {type = KinematicsType::Observed; break;}
+                        case 1: {type = KinematicsType::True; break;}
+                        case 2: {type = KinematicsType::Born; break;}
+                }
 
                 setFourMomentum(m_gammaStar, type, getFourMomentum(m_eIn, type) - getFourMomentum(m_eOut, type));
         }
@@ -53,9 +85,9 @@ DVCSEvent::DVCSEvent(const GenEvent& evtGen, const GenEvent& evtRec, int beamPol
         //radiation
         m_rcTypeMask = 0;
 
-        if(m_gammaISR.first != TLorentzVector())
+        if(getFourMomentum(m_gammaISR, KinematicsType::True) != TLorentzVector())
                 m_rcTypeMask |= RCType::ISR;
-         if(m_gammaFSR.first != TLorentzVector())
+        if(getFourMomentum(m_gammaFSR, KinematicsType::True) != TLorentzVector())
                 m_rcTypeMask |= RCType::FSR;
 
         //beam polarisation
@@ -128,17 +160,22 @@ double DVCSEvent::getPhiPhiS(int mode, const TLorentzVector& q,
          return -1;
 }
 
-void DVCSEvent::setFourMomentum(std::pair<TLorentzVector, TLorentzVector>& inputPair, KinematicsType::Type type, const TLorentzVector& mom) const{
+void DVCSEvent::setFourMomentum(std::tuple<TLorentzVector, TLorentzVector, TLorentzVector>& input, KinematicsType::Type type, const TLorentzVector& mom) const{
 
         switch(type){
 
                 case KinematicsType::Observed:{
-                        inputPair.first = mom;
+                        std::get<0>(input) = mom;
                         break;
                 }
 
                 case KinematicsType::True:{
-                        inputPair.second = mom;
+                        std::get<1>(input) = mom;
+                        break;
+                }
+
+                case KinematicsType::Born:{
+                        std::get<2>(input) = mom;
                         break;
                 }
 
@@ -151,17 +188,22 @@ void DVCSEvent::setFourMomentum(std::pair<TLorentzVector, TLorentzVector>& input
         }
 }
 
-const TLorentzVector& DVCSEvent::getFourMomentum(const std::pair<TLorentzVector, TLorentzVector>& inputPair, KinematicsType::Type type) const{
+const TLorentzVector& DVCSEvent::getFourMomentum(const std::tuple<TLorentzVector, TLorentzVector, TLorentzVector>& input, KinematicsType::Type type) const{
 
         switch(type){
 
                 case KinematicsType::Observed:{
-                        return inputPair.first;
+                        return std::get<0>(input);
                         break;
                 }
 
                 case KinematicsType::True:{
-                        return inputPair.second;
+                        return std::get<1>(input);
+                        break;
+                }
+
+                case KinematicsType::Born:{
+                        return std::get<2>(input);
                         break;
                 }
 
@@ -572,10 +614,24 @@ const TLorentzVector& DVCSEvent::getGammaOut(KinematicsType::Type type) const{
 }
 
 const TLorentzVector& DVCSEvent::getGammaISR(KinematicsType::Type type) const{
+
+        if(type == KinematicsType::Born){
+
+                std::cout << "error: " << __func__ << ": undefined for this type, " << KinematicsType(type).toString() << std::endl;
+                exit(0);
+        }
+
         return getFourMomentum(m_gammaISR, type);
 }
 
 const TLorentzVector& DVCSEvent::getGammaFSR(KinematicsType::Type type) const{
+
+        if(type == KinematicsType::Born){
+                
+                std::cout << "error: " << __func__ << ": undefined for this type, " << KinematicsType(type).toString() << std::endl;
+                exit(0);
+        }
+
         return getFourMomentum(m_gammaFSR, type);
 }       
 
@@ -631,7 +687,7 @@ bool DVCSEvent::isReconstructed() const{
         return m_isReconstructed;
 }    
 
-bool DVCSEvent::improveReconstruction(std::pair<TLorentzVector, TLorentzVector>& lvs, double mass) const{
+bool DVCSEvent::improveReconstruction(std::tuple<TLorentzVector, TLorentzVector, TLorentzVector>& lvs, double mass) const{
 
         //check if reconstructed
         if(getFourMomentum(lvs, KinematicsType::Observed) == TLorentzVector()) return false;
