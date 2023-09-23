@@ -1,0 +1,38 @@
+#! /usr/bin/awk -f
+
+BEGIN{
+	isALU=0
+
+	xB=""
+	Q2=""
+	t=""
+	val=""
+	err=""
+}
+
+{
+	if($1 == "================================================================="){
+
+		if(isALU == 1){
+			printf("%.4f %10.4f %10.4f %10.4f %10.4f\n", xB, Q2, t, val, err)
+		}
+
+		isALU=0
+	}
+
+	if($1 == "BinALU::print"){
+		isALU=1
+	}
+
+	if(isALU == 1){
+
+		if($4 == "xB:") xB=$12		
+		if($4 == "Q2:") Q2=$12		
+		if($2 == "|t|:") t=$10		
+		if($1 == "FitResult::print" && $3 == "par" && $4 == "0:") val=$6		
+		if($1 == "FitResult::print" && $3 == "par" && $4 == "0:") err=$8		
+	}
+}
+
+END{
+}
