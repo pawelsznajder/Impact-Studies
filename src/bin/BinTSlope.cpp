@@ -216,6 +216,13 @@ void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
 	for(size_t i = 0; i < m_fFit->GetNpar(); i++){
 		m_fitResult->addParameter(std::make_pair(m_fFit->GetParameter(i), m_fFit->GetParError(i)));
 	}
+
+	//print
+	std::cout << "NUCLEON_TOMOGRAPHY{" << getMeanXB() << ", " << getMeanQ2() << ", " << m_hTSlope->GetNbinsX() << ", " << m_hTSlope->GetXaxis()->GetXmin() << ", " << m_hTSlope->GetXaxis()->GetXmax();
+	for(size_t i = 1; i <= m_hTSlope->GetNbinsX(); i++){
+		std::cout << ", " << m_hTSlope->GetBinContent(i) << ", " << m_hTSlope->GetBinError(i);
+	}
+	std::cout << "}," << std::endl;
 }
 
 void BinTSlope::print() const{

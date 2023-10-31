@@ -70,6 +70,17 @@ std::pair<double, double> Bin::checkRange(const std::pair<double, double>& range
 	return range;
 }
 
+void Bin::printHistogram(TH1* h, const std::string& token) const{
+
+	std::cout << token;
+
+	for(size_t i = 1; i <= h->GetNbinsX(); i++){
+		std::cout << ' ' << h->GetBinCenter(i) << ' ' << h->GetBinContent(i) << ' ' << h->GetBinError(i);
+	}
+
+	std::cout << std::endl;
+}
+
 void Bin::print() const{
 	std::cout << getClassName() << "::" << __func__ << " debug: " << 
 		"number of events: " << m_nEvents << std::endl;

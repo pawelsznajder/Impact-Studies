@@ -2,6 +2,7 @@
 #define BIN_H
 
 #include <cstring>
+#include <TH1.h>
 
 #include "../../include/other/BaseObject.h"
 #include "../../include/other/FitResult.h"
@@ -48,6 +49,9 @@ protected:
 
 	//check range
 	std::pair<double, double> checkRange(const std::pair<double, double>& range) const;
+
+	//print histogram
+	void printHistogram(TH1* h, const std::string& token) const;
 
 	size_t m_nEvents;		//number of stored events
 	double m_sumWeights;	//sum of weights

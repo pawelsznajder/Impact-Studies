@@ -28,10 +28,21 @@ BinALU::BinALU(
 
 	//make histograms
 	ss.clear();
-	ss << "observed: " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+	ss << "observed (lumi): " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
 		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
 	
 	m_hDistributions = std::make_pair(
+		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
+			nPhiBins, rangePhi.first, rangePhi.second), 
+		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
+			nPhiBins, rangePhi.first, rangePhi.second)
+	);
+
+	ss.clear();
+	ss << "observed: " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
+		m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
+	
+	m_hDistributionsObserved = std::make_pair(
 		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
 			nPhiBins, rangePhi.first, rangePhi.second), 
 		new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
@@ -63,6 +74,9 @@ BinALU::BinALU(
 	//set sumw2
 	m_hDistributions.first->Sumw2();
 	m_hDistributions.second->Sumw2();
+
+	m_hDistributionsObserved.first->Sumw2();
+	m_hDistributionsObserved.second->Sumw2();
 
 	m_hDistributionsTrue.first->Sumw2();
 	m_hDistributionsTrue.second->Sumw2();
@@ -97,55 +111,42 @@ void BinALU::reset(){
 
 	//reset histograms
 	m_hDistributions = std::make_pair(nullptr, nullptr);
+	m_hDistributionsObserved = std::make_pair(nullptr, nullptr);
 	m_hDistributionsTrue = std::make_pair(nullptr, nullptr);
 	m_hDistributionsBorn = std::make_pair(nullptr, nullptr);
+	m_hDistributionsAcceptance = std::make_pair(nullptr, nullptr);
 	m_hDistributionsRC = std::make_pair(nullptr, nullptr);
+	m_hDistributionsCorrected = std::make_pair(nullptr, nullptr);
 	m_hAsymmetry = nullptr;
+	m_hSum = nullptr;
+	m_hDif = nullptr;
 }
 
 void BinALU::fill(DVCSEvent& event, double weight){
 
-	
-	//only reconstructed
-	if(! event.isReconstructed()) return;
+	//get beam polarisation state
+	const int& beamPolarisation = event.getBeamPolarisation();
 
 	//fill
-	switch(event.getBeamPolarisation()){
+	if(event.isReconstructed()){
 
-	 	case -1:{
+		if(weight > 0.){
 
-	 		if(weight > 0.) m_hDistributions.first->Fill(event.getPhi());
-	 		m_hDistributionsTrue.first->Fill(event.getPhi(KinematicsType::True));
-	 		m_hDistributionsBorn.first->Fill(event.getPhi(KinematicsType::Born));
+			getH(m_hDistributions, beamPolarisation)->Fill(event.getPhi());
 
-	 		break;
-	 	}
+			Bin::fill(event, weight);
 
-	   	case 1:{
+			m_sumXB += weight * event.getXB();
+			m_sumQ2 += weight * event.getQ2();
+			m_sumT += weight * event.getT();
+			m_sumPhi += weight * event.getPhi();
+		}
 
-	   		if(weight > 0.) m_hDistributions.second->Fill(event.getPhi());
-	   		m_hDistributionsTrue.second->Fill(event.getPhi(KinematicsType::True));
-	   		m_hDistributionsBorn.second->Fill(event.getPhi(KinematicsType::Born));
-
-	   	 	break;
-	   	}
-
-	   default:{
-	   		std::cout << __func__ << " error: wrong beam polarisation state, " << event.getBeamPolarisation() << std::endl;
-			exit(0);
-	   }
+		getH(m_hDistributionsTrue, beamPolarisation)->Fill(event.getPhi(KinematicsType::True));
+		getH(m_hDistributionsBorn, beamPolarisation)->Fill(event.getPhi(KinematicsType::Born));
 	}
 
-	//kinematics
-	if(weight > 0.){
-
-		Bin::fill(event, weight);
-
-		m_sumXB += weight * event.getXB();
-		m_sumQ2 += weight * event.getQ2();
-		m_sumT += weight * event.getT();
-		m_sumPhi += weight * event.getPhi();
-	}
+	getH(m_hDistributionsObserved, beamPolarisation)->Fill(event.getPhi(KinematicsType::Observed));
 }
 
 void BinALU::analyse(){
@@ -161,6 +162,30 @@ void BinALU::analyse(){
 		return;
 	}
 
+	//calculate acceptance
+	m_hDistributionsAcceptance.first = static_cast<TH1*>(m_hDistributionsTrue.first->Clone());
+	m_hDistributionsAcceptance.second = static_cast<TH1*>(m_hDistributionsTrue.second->Clone());
+
+	m_hDistributionsAcceptance.first->Divide(m_hDistributionsObserved.first);
+	m_hDistributionsAcceptance.second->Divide(m_hDistributionsObserved.second);
+
+	//get corrected distributions
+	m_hDistributionsCorrected.first = static_cast<TH1*>(m_hDistributions.first->Clone());
+	m_hDistributionsCorrected.second = static_cast<TH1*>(m_hDistributions.second->Clone());
+
+	m_hDistributionsCorrected.first->Divide(m_hDistributionsAcceptance.first);
+	m_hDistributionsCorrected.second->Divide(m_hDistributionsAcceptance.second);
+
+	//sum and difference
+	m_hSum = static_cast<TH1*>(m_hDistributionsCorrected.first->Clone());
+	m_hSum->Add(m_hDistributionsCorrected.second);
+
+	m_hDif = static_cast<TH1*>(m_hDistributionsCorrected.first->Clone());
+	m_hDif->Add(m_hDistributionsCorrected.second, -1.);
+
+	printHistogram(m_hSum, "ALUSUM");
+	printHistogram(m_hDif, "ALUDIF");
+
 	//calculate RC
 	m_hDistributionsRC.first = static_cast<TH1*>(m_hDistributionsBorn.first->Clone());
 	m_hDistributionsRC.second = static_cast<TH1*>(m_hDistributionsBorn.second->Clone());
@@ -171,6 +196,8 @@ void BinALU::analyse(){
 	//make asymmetry histogram
 	m_hAsymmetry = 
 		m_hDistributions.first->GetAsymmetry(m_hDistributions.second);
+
+	printHistogram(m_hAsymmetry, "ALUASS");
 
 	//fit
 	//fit options: 
@@ -245,6 +272,10 @@ const std::pair<TH1*, TH1*>& BinALU::getHDistributions() const{
 	return m_hDistributions;
 }
 
+const std::pair<TH1*, TH1*>& BinALU::getHDistributionsObserved() const{
+	return m_hDistributionsObserved;
+}
+
 const std::pair<TH1*, TH1*>& BinALU::getHDistributionsTrue() const{
 	return m_hDistributionsTrue;
 }
@@ -253,10 +284,45 @@ const std::pair<TH1*, TH1*>& BinALU::getHDistributionsBorn() const{
 	return m_hDistributionsBorn;
 }
 
+const std::pair<TH1*, TH1*>& BinALU::getHDistributionsAcceptance() const{
+	return m_hDistributionsAcceptance;
+}
+
 const std::pair<TH1*, TH1*>& BinALU::getHDistributionsRC() const{
 	return m_hDistributionsRC;
 }
 
+const std::pair<TH1*, TH1*>& BinALU::getHDistributionsCorrected() const{
+	return m_hDistributionsCorrected;
+}
+
+TH1* BinALU::getHSum() const{
+	return m_hSum;
+}
+
+TH1* BinALU::getHDifference() const{
+	return m_hDif;
+}
+
 TH1* BinALU::getHAsymmetry() const{
 	return m_hAsymmetry;
+}
+
+TH1* BinALU::getH(const std::pair<TH1*, TH1*>& histogramPair, int beamPolarisation) const{
+
+	switch(beamPolarisation){
+
+	 	case -1:{
+	 		return histogramPair.first;
+	 	}
+
+	   	case 1:{
+	 		return histogramPair.second;
+	   	}
+
+	   default:{
+	   		std::cout << __func__ << " error: wrong beam polarisation state, " << beamPolarisation << std::endl;
+			exit(0);
+	   }
+	}
 }
