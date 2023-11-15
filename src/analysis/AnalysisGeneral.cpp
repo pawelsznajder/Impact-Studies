@@ -7,7 +7,8 @@
 
 #include "../../include/other/HashManager.h"
 
-AnalysisGeneral::AnalysisGeneral() : Analysis("AnalysisGeneral", 0.){
+AnalysisGeneral::AnalysisGeneral(double targetLuminosity) : Analysis("AnalysisGeneral", targetLuminosity), 
+	m_lumi(0.){
 
 	//number of bins 
 	int nbin = 100;
@@ -71,10 +72,27 @@ AnalysisGeneral::AnalysisGeneral() : Analysis("AnalysisGeneral", 0.){
 AnalysisGeneral::~AnalysisGeneral(){
 }
 
+TH1* AnalysisGeneral::evaluateAcceptance(TH1** h) const{
+
+	TH1* acc = (TH1*)h[1]->Clone();
+	acc->SetName(("acc_"+std::string(h[1]->GetName())).c_str());
+	acc->Divide(h[0]);
+	return acc;
+}
+
 void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 
-	//reset weight
-	weight = 1.;
+	//only comming from DVCS+INT+BH sample
+	if(! (
+		event.checkSubProcessType(SubProcessType::BH) && 
+		event.checkSubProcessType(SubProcessType::INT) && 
+		event.checkSubProcessType(SubProcessType::DVCS)
+		)
+	) return;
+
+	//luminosity
+	if(m_lumi >= m_targetLuminosity) return;
+	m_lumi += weight;
 
 	//fill 1D histograms
 	for(size_t i = 0; i < 2; i++){
@@ -86,52 +104,52 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 
 			m_resProbPOut[i]++;
 
-			m_hPPOut[i]->Fill(event.getPOut(kinematicsType).P(), weight);
-			m_hPPtOut[i]->Fill(event.getPOut(kinematicsType).Pt(), weight);
-			m_hPThOut[i]->Fill(event.getPOut(kinematicsType).Theta()*1000., weight);
-			m_hPPhOut[i]->Fill(event.getPOut(kinematicsType).Phi(), weight);
-			m_hEtaPOut[i]->Fill(event.getPOut(kinematicsType).Eta(), weight);
+			m_hPPOut[i]->Fill(event.getPOut(kinematicsType).P());
+			m_hPPtOut[i]->Fill(event.getPOut(kinematicsType).Pt());
+			m_hPThOut[i]->Fill(event.getPOut(kinematicsType).Theta()*1000.);
+			m_hPPhOut[i]->Fill(event.getPOut(kinematicsType).Phi());
+			m_hEtaPOut[i]->Fill(event.getPOut(kinematicsType).Eta());
 		}
 		if (event.getEOut(kinematicsType).E() > 0.) { 
 
 			m_resProbEOut[i]++;
 
-			m_hEPOut[i]->Fill(event.getEOut(kinematicsType).P(), weight);
-			m_hEPtOut[i]->Fill(event.getEOut(kinematicsType).Pt(), weight);
-			m_hEThOut[i]->Fill(event.getEOut(kinematicsType).Theta(), weight);
-			m_hEPhOut[i]->Fill(event.getEOut(kinematicsType).Phi(), weight);
-			m_hEtaEOut[i]->Fill(event.getEOut(kinematicsType).Eta(), weight);
+			m_hEPOut[i]->Fill(event.getEOut(kinematicsType).P());
+			m_hEPtOut[i]->Fill(event.getEOut(kinematicsType).Pt());
+			m_hEThOut[i]->Fill(event.getEOut(kinematicsType).Theta());
+			m_hEPhOut[i]->Fill(event.getEOut(kinematicsType).Phi());
+			m_hEtaEOut[i]->Fill(event.getEOut(kinematicsType).Eta());
 		}
 		if (event.getGammaOut(kinematicsType).E() > 0.) { 
 
 			m_resProbGOut[i]++;
 
-			m_hGPOut[i]->Fill(event.getGammaOut(kinematicsType).P(), weight);
-			m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsType).Pt(), weight);
-			m_hGThOut[i]->Fill(event.getGammaOut(kinematicsType).Theta(), weight);
-			m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsType).Phi(), weight);
-			m_hEtaGOut[i]->Fill(event.getGammaOut(kinematicsType).Eta(), weight);
+			m_hGPOut[i]->Fill(event.getGammaOut(kinematicsType).P());
+			m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsType).Pt());
+			m_hGThOut[i]->Fill(event.getGammaOut(kinematicsType).Theta());
+			m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsType).Phi());
+			m_hEtaGOut[i]->Fill(event.getGammaOut(kinematicsType).Eta());
 		}
 
 		if (event.getPOut(kinematicsType).E() < 0. || event.getEOut(kinematicsType).E() < 0. || event.getGammaOut(kinematicsType).E() < 0.) continue; 
 
 			m_resProbExcl[i]++;
 
-			m_hXBvsQ2->Fill(log10(event.getXB()), log10(event.getQ2()), weight);
+			m_hXBvsQ2->Fill(log10(event.getXB()), log10(event.getQ2()));
 
-			m_hXB[i]->Fill(log10(event.getXB(kinematicsType)), weight);
-			m_hQ2[i]->Fill(log10(event.getQ2(kinematicsType)), weight);
-			m_hT[i]->Fill(fabs(event.getT(kinematicsType)), weight);
-			m_hPhi[i]->Fill(event.getPhi(kinematicsType), weight);
-			m_hPhiS[i]->Fill(event.getPhiS(kinematicsType), weight);
-			m_hY[i]->Fill(event.getY(kinematicsType), weight);
+			m_hXB[i]->Fill(log10(event.getXB(kinematicsType)));
+			m_hQ2[i]->Fill(log10(event.getQ2(kinematicsType)));
+			m_hT[i]->Fill(fabs(event.getT(kinematicsType)));
+			m_hPhi[i]->Fill(event.getPhi(kinematicsType));
+			m_hPhiS[i]->Fill(event.getPhiS(kinematicsType));
+			m_hY[i]->Fill(event.getY(kinematicsType));
 
-			m_hxBvsQ2[i]->Fill(log10(event.getXB(kinematicsType)), log10(event.getQ2(kinematicsType)), weight);
-			m_hXBvsT[i]->Fill(log10(event.getXB(kinematicsType)), fabs(event.getT(kinematicsType)), weight);
-			m_hXBvsY[i]->Fill(log10(event.getXB(kinematicsType)), event.getY(kinematicsType), weight);
-			m_hQ2vsT[i]->Fill(log10(event.getQ2(kinematicsType)), fabs(event.getT(kinematicsType)), weight);
-			m_hYvsT[i]->Fill(event.getY(kinematicsType), fabs(event.getT(kinematicsType)), weight);
-			m_hQ2vsY[i]->Fill(log10(event.getQ2(kinematicsType)), event.getY(kinematicsType), weight);
+			m_hxBvsQ2[i]->Fill(log10(event.getXB(kinematicsType)), log10(event.getQ2(kinematicsType)));
+			m_hXBvsT[i]->Fill(log10(event.getXB(kinematicsType)), fabs(event.getT(kinematicsType)));
+			m_hXBvsY[i]->Fill(log10(event.getXB(kinematicsType)), event.getY(kinematicsType));
+			m_hQ2vsT[i]->Fill(log10(event.getQ2(kinematicsType)), fabs(event.getT(kinematicsType)));
+			m_hYvsT[i]->Fill(event.getY(kinematicsType), fabs(event.getT(kinematicsType)));
+			m_hQ2vsY[i]->Fill(log10(event.getQ2(kinematicsType)), event.getY(kinematicsType));
 	}
 }
 
@@ -152,51 +170,30 @@ void AnalysisGeneral::plot(const std::string& path){
 		m_resProbExcl[1] << "\tratio: " << m_resProbExcl[1]/double(m_resProbExcl[0]) << std::endl;
 
 	//Clone and make ratio of histograms
-	m_hRatio[0] = (TH1*)m_hPPOut[1]->Clone();
-	m_hRatio[0]->Divide(m_hPPOut[0]); // PPOut ratio
-	m_hRatio[1] = (TH1*)m_hPPtOut[1]->Clone();
-	m_hRatio[1]->Divide(m_hPPtOut[0]); // PPtOut ratio
-	m_hRatio[2] = (TH1*)m_hPThOut[1]->Clone();
-	m_hRatio[2]->Divide(m_hPThOut[0]); // PThOut ratio
-	m_hRatio[3] = (TH1*)m_hPPhOut[1]->Clone();
-	m_hRatio[3]->Divide(m_hPPhOut[0]); // PPhOut ratio
-	m_hRatio[4] = (TH1*)m_hEtaPOut[1]->Clone();
-	m_hRatio[4]->Divide(m_hEtaPOut[0]); // EtaPOut ratio
+	m_hRatio[0] = evaluateAcceptance(m_hPPOut);
+	m_hRatio[1] = evaluateAcceptance(m_hPPtOut);
+	m_hRatio[2] = evaluateAcceptance(m_hPThOut);
+	m_hRatio[3] = evaluateAcceptance(m_hPPhOut);
+	m_hRatio[4] = evaluateAcceptance(m_hEtaPOut);
 
-	m_hRatio[5] = (TH1*)m_hEPOut[1]->Clone();
-	m_hRatio[5]->Divide(m_hEPOut[0]); // EPOut ratio
-	m_hRatio[6] = (TH1*)m_hEPtOut[1]->Clone();
-	m_hRatio[6]->Divide(m_hEPtOut[0]); // EPtOut ratio
-	m_hRatio[7] = (TH1*)m_hEThOut[1]->Clone();
-	m_hRatio[7]->Divide(m_hEThOut[0]); // EThOut ratio
-	m_hRatio[8] = (TH1*)m_hEPhOut[1]->Clone();
-	m_hRatio[8]->Divide(m_hEPhOut[0]); // EPhOut ratio
-	m_hRatio[9] = (TH1*)m_hEtaEOut[1]->Clone();
-	m_hRatio[9]->Divide(m_hEtaEOut[0]); // EtaEOut ratio
+	m_hRatio[5] = evaluateAcceptance(m_hEPOut);
+	m_hRatio[6] = evaluateAcceptance(m_hEPtOut);
+	m_hRatio[7] = evaluateAcceptance(m_hEThOut);
+	m_hRatio[8] = evaluateAcceptance(m_hEPhOut);
+	m_hRatio[9] = evaluateAcceptance(m_hEtaEOut);
 	
-	m_hRatio[10] = (TH1*)m_hGPOut[1]->Clone();
-	m_hRatio[10]->Divide(m_hGPOut[0]); // GPOut ratio
-	m_hRatio[11] = (TH1*)m_hGPtOut[1]->Clone();
-	m_hRatio[11]->Divide(m_hGPtOut[0]); // GPtOut ratio
-	m_hRatio[12] = (TH1*)m_hGThOut[1]->Clone();
-	m_hRatio[12]->Divide(m_hGThOut[0]); // GThOut ratio
-	m_hRatio[13] = (TH1*)m_hGPhOut[1]->Clone();
-	m_hRatio[13]->Divide(m_hGPhOut[0]); // GPhOut ratio
-	m_hRatio[14] = (TH1*)m_hEtaGOut[1]->Clone();
-	m_hRatio[14]->Divide(m_hEtaGOut[0]); // EtaGOut ratio
+	m_hRatio[10] = evaluateAcceptance(m_hGPOut);
+	m_hRatio[11] = evaluateAcceptance(m_hGPtOut);
+	m_hRatio[12] = evaluateAcceptance(m_hGThOut);
+	m_hRatio[13] = evaluateAcceptance(m_hGPhOut);
+	m_hRatio[14] = evaluateAcceptance(m_hEtaGOut);
 	
-	m_hRatio[15] = (TH1*)m_hXB[1]->Clone();
-	m_hRatio[15]->Divide(m_hXB[0]); // XB ratio
-	m_hRatio[16] = (TH1*)m_hQ2[1]->Clone();
-	m_hRatio[16]->Divide(m_hQ2[0]); // Q2 ratio
-	m_hRatio[17] = (TH1*)m_hT[1]->Clone();
-	m_hRatio[17]->Divide(m_hT[0]); // |t| ratio
-	m_hRatio[18] = (TH1*)m_hY[1]->Clone();
-	m_hRatio[18]->Divide(m_hY[0]); // y ratio
-	m_hRatio[19] = (TH1*)m_hPhi[1]->Clone();
-	m_hRatio[19]->Divide(m_hPhi[0]); // phi ratio
-	m_hRatio[20] = (TH1*)m_hPhiS[1]->Clone();
-	m_hRatio[20]->Divide(m_hPhiS[0]); // phi_s ratio
+	m_hRatio[15] = evaluateAcceptance(m_hXB);
+	m_hRatio[16] = evaluateAcceptance(m_hQ2);
+	m_hRatio[17] = evaluateAcceptance(m_hT);
+	m_hRatio[18] = evaluateAcceptance(m_hY);
+	m_hRatio[19] = evaluateAcceptance(m_hPhi);
+	m_hRatio[20] = evaluateAcceptance(m_hPhiS);
 
 	//canvases
 	std::vector<TCanvas*> cans;
@@ -207,6 +204,30 @@ void AnalysisGeneral::plot(const std::string& path){
 	leg[3] = new TLegend(0.15,0.65,0.5,0.8);
 	leg[4] = new TLegend(0.5,0.15,0.85,0.3);
 	leg[5] = new TLegend(0.15,0.65,0.5,0.8);
+
+	//write
+	m_hXBvsQ2->Write();
+
+	for(size_t i = 0; i < 2; i++){
+
+		m_hXB[i]->Write();
+		m_hQ2[i]->Write();
+		m_hT[i]->Write();
+		m_hY[i]->Write();
+
+		m_hEtaPOut[i]->Write();
+		m_hEtaEOut[i]->Write();
+		m_hEtaGOut[i]->Write();
+	}
+
+	m_hRatio[15]->Write();
+	m_hRatio[16]->Write();
+	m_hRatio[17]->Write();
+	m_hRatio[18]->Write();
+
+	m_hRatio[4]->Write();
+	m_hRatio[9]->Write();
+	m_hRatio[14]->Write();
 
 	//loop over canvases
 	for(size_t i = 0; i < 6; i++){

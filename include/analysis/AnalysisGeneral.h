@@ -16,7 +16,7 @@ class AnalysisGeneral : public Analysis{
 public:
 
 	//constructor
-	AnalysisGeneral();
+	AnalysisGeneral(double targetLuminosity);
 
 	//destructor
 	virtual ~AnalysisGeneral();
@@ -31,6 +31,12 @@ public:
 	virtual void plot(const std::string& path);
 
 private:
+
+	//evaluate acceptance
+	TH1* evaluateAcceptance(TH1** h) const;
+
+	//luminosity corresponding to accumulated luminosity
+	double m_lumi;
 
 	//reconstruction probabilities
 	double m_resProbPOut[2];

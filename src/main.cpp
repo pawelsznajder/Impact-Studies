@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <regex>
 #include <HepMC3/ReaderAscii.h>
+#include <TFile.h>
 
 #include "../include/analysis/AnalysisGeneral.h"
 //#include "../include/analysis/AnalysisEpIC.h"
@@ -42,6 +43,9 @@ int main(int argc, char* argv[]){
 		exit(0);
 	}
 
+	//open file
+	TFile rootFile("histograms.root", "recreate");
+
 	//target luminosity (in fb-1)
 	const double targetIntegratedLuminosityFb = 10.;
 
@@ -53,7 +57,7 @@ int main(int argc, char* argv[]){
 	double integratedLuminosityFbBH[] = {0., 0.};
 
 	//analysis objects
-	AnalysisGeneral analysisGeneral;
+	AnalysisGeneral analysisGeneral(targetIntegratedLuminosityFb);
 //	AnalysisEpIC analysisEpIC;
 	// AnalysisGeneralRC analysisGeneralRC;
 	AnalysisALU analysisALU(targetIntegratedLuminosityFb);
@@ -242,10 +246,7 @@ int main(int argc, char* argv[]){
 	                	//TODO add beam charge and target polarisation
 	               	 	DVCSEvent dvcsEvent(evtRec, evtGen, beamPolarisation.at(iFile), -1, TVector3(0., 0., 0.), isRCSample.at(iFile), 
 	               	 		subProcessTypeMask.at(iFile));
-	       
-	     				//fill
-	               	 	analysisGeneral.fill(dvcsEvent, 1.);
-		               	 	
+	       		               	 	
 	               	 	//luminosity
 	               	 	size_t beamPolarisationState;
 
@@ -279,6 +280,11 @@ int main(int argc, char* argv[]){
 						double weight = 1/crossSection.at(iFile).first/1.E6;
 
 						//fill
+	               	 	analysisGeneral.fill(dvcsEvent, weight);
+	               	 	if(integratedLuminosityFbALL[0]+integratedLuminosityFbALL[1]>=targetIntegratedLuminosityFb){
+	               	 		std::cout << "GENERAL_DONE" << std::endl;
+	               	 		break;
+	               	 	}
 						analysisALU.fill(dvcsEvent, weight);
 						analysisTSlope.fill(dvcsEvent, weight);
 
@@ -314,9 +320,13 @@ int main(int argc, char* argv[]){
 	analysisTSlope.plot("analysisTSlope.pdf");
 
 	std::cout << __func__ << ": info: target luminosity: " << 
-		((integratedLuminosityFbALL[0] >= targetIntegratedLuminosityFb && integratedLuminosityFbALL[1] >= targetIntegratedLuminosityFb &&
-			integratedLuminosityFbBH[0] >= targetIntegratedLuminosityFb && integratedLuminosityFbBH[1] >= targetIntegratedLuminosityFb)?
+		((integratedLuminosityFbALL[0] >= targetIntegratedLuminosityFb/2. && integratedLuminosityFbALL[1] >= targetIntegratedLuminosityFb/2.)?
 		(" reached"):(" NOT REACHED!!!")) << std::endl;
+
+	std::cout << __func__ << ": info: target luminosity fraction: " << (integratedLuminosityFbALL[0]+integratedLuminosityFbALL[1])/targetIntegratedLuminosityFb << std::endl;
+
+	//close file
+	rootFile.Close();
 
 	return 0;
 }
