@@ -94,11 +94,11 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 			if(event.isReconstructed()) m_hDistributions.at(0)->Fill(-1 * event.getT());
 
 			//kinematics
-			Bin::fill(event, weight);
+			Bin::fill(event);
 
-			m_sumXB += weight * event.getXB();
-			m_sumQ2 += weight * event.getQ2();
-			m_sumT += weight * event.getT();
+			m_sumXB += event.getXB();
+			m_sumQ2 += event.getQ2();
+			m_sumT += event.getT();
 		}
 
 		m_hDistributions.at(2)->Fill(-1 * event.getT(KinematicsType::True));

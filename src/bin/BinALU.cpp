@@ -134,19 +134,19 @@ void BinALU::fill(DVCSEvent& event, double weight){
 
 			getH(m_hDistributions, beamPolarisation)->Fill(event.getPhi());
 
-			Bin::fill(event, weight);
+			Bin::fill(event);
 
-			m_sumXB += weight * event.getXB();
-			m_sumQ2 += weight * event.getQ2();
-			m_sumT += weight * event.getT();
-			m_sumPhi += weight * event.getPhi();
+			m_sumXB += event.getXB();
+			m_sumQ2 += event.getQ2();
+			m_sumT += event.getT();
+			m_sumPhi += event.getPhi();
 		}
 
-		getH(m_hDistributionsTrue, beamPolarisation)->Fill(event.getPhi(KinematicsType::True));
-		getH(m_hDistributionsBorn, beamPolarisation)->Fill(event.getPhi(KinematicsType::Born));
+		getH(m_hDistributionsObserved, beamPolarisation)->Fill(event.getPhi(KinematicsType::Observed));
 	}
 
-	getH(m_hDistributionsObserved, beamPolarisation)->Fill(event.getPhi(KinematicsType::Observed));
+	getH(m_hDistributionsTrue, beamPolarisation)->Fill(event.getPhi(KinematicsType::True));
+	getH(m_hDistributionsBorn, beamPolarisation)->Fill(event.getPhi(KinematicsType::Born));
 }
 
 void BinALU::analyse(){
