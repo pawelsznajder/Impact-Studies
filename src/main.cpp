@@ -280,13 +280,13 @@ int main(int argc, char* argv[]){
 						double weight = 1/crossSection.at(iFile).first/1.E6;
 
 						//fill
-	               	 	analysisGeneral.fill(dvcsEvent, weight);
-	               	 	if(integratedLuminosityFbALL[0]+integratedLuminosityFbALL[1]>=targetIntegratedLuminosityFb){
-	               	 		std::cout << "GENERAL_DONE" << std::endl;
-	               	 		break;
-	               	 	}
+	               	 	// analysisGeneral.fill(dvcsEvent, weight);
+	               	 	// if(integratedLuminosityFbALL[0]+integratedLuminosityFbALL[1]>=targetIntegratedLuminosityFb){
+	               	 	// 	std::cout << "GENERAL_DONE" << std::endl;
+	               	 	// 	break;
+	               	 	// }
 						analysisALU.fill(dvcsEvent, weight);
-						analysisTSlope.fill(dvcsEvent, weight);
+						// analysisTSlope.fill(dvcsEvent, weight);
 
 						//counter
 	               	 	iEvent++;
@@ -306,18 +306,18 @@ int main(int argc, char* argv[]){
 	// return 0;
    
 	//analyse
-	analysisGeneral.analyse();
+	// analysisGeneral.analyse();
 	//analysisEpIC.analyse();
 	// analysisGeneralRC.analyse();
 	analysisALU.analyse();
-	analysisTSlope.analyse();
+	// analysisTSlope.analyse();
 
 	//print
-	analysisGeneral.plot("analysisGeneral.pdf");
+	// analysisGeneral.plot("analysisGeneral.pdf");
 	//analysisEpIC.plot("analysisEpIC.pdf");
 	// analysisGeneralRC.plot("analysisGeneralRC.pdf");
 	analysisALU.plot("analysisALU.pdf");
-	analysisTSlope.plot("analysisTSlope.pdf");
+	// analysisTSlope.plot("analysisTSlope.pdf");
 
 	std::cout << __func__ << ": info: target luminosity: " << 
 		((integratedLuminosityFbALL[0] >= targetIntegratedLuminosityFb/2. && integratedLuminosityFbALL[1] >= targetIntegratedLuminosityFb/2.)?

@@ -61,19 +61,47 @@ void AnalysisALU::fill(DVCSEvent& event, double weight){
 	}
 
 	//fill
+	KinematicsType::Type kinematicsType;
+	double xB, Q2, mT;
+
 	for(std::vector<BinALU>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
 
-		if(event.getXB() < it->getRangeXB().first || 
-			event.getXB() >= it->getRangeXB().second) continue; 
+		bool isOK = false;
 
-		if(event.getQ2() < it->getRangeQ2().first || 
-			event.getQ2() >= it->getRangeQ2().second) continue; 
+		for(size_t i = 0; i < 3; i++){
 
-		if(fabs(event.getT()) < it->getRangeT().first || 
-			fabs(event.getT()) >= it->getRangeT().second) continue; 
+			switch(i){
 
-		it->fill(event, weight);
+			case 0:{
+				kinematicsType = KinematicsType::Observed;
+				break;
+			}
+
+			case 1:{
+				kinematicsType = KinematicsType::True;
+				break;
+			}
+
+			case 2:{
+				kinematicsType = KinematicsType::Born;
+				break;
+			}
+			}
+
+			xB = event.getXB(kinematicsType);
+			Q2 = event.getQ2(kinematicsType);
+			mT = fabs(event.getT(kinematicsType));
+
+			if(xB < it->getRangeXB().first || xB >= it->getRangeXB().second) continue; 
+			if(Q2 < it->getRangeQ2().first || Q2 >= it->getRangeQ2().second) continue; 
+			if(mT < it->getRangeT().first || mT >= it->getRangeT().second) continue; 
+
+			isOK = true;
+			break;
+		}
+
+		if(isOK) it->fill(event, weight);
 	}
 }
 
@@ -83,6 +111,12 @@ void AnalysisALU::analyse(){
 	for(std::vector<BinALU>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
 
+		//print
+		std::cout << "=== ALU BIN START ==============================================================" << std::endl;
+
+		//print
+		it->print();
+
 		//make analysis
 		it->analyse();
 
@@ -90,11 +124,12 @@ void AnalysisALU::analyse(){
 		FitResult* fitResult = it->getFitResult();
 
 		//check if not empty
-		if(fitResult == nullptr) continue;
+		if(fitResult != nullptr){
+			fitResult->print();
+		}
 
 		//print
-		it->print();
-		fitResult->print();
+		std::cout << "=== ALU BIN END ================================================================" << std::endl;
 	}
 }
 
@@ -117,7 +152,7 @@ void AnalysisALU::plot(const std::string& path){
 		ss << itT->first << " #leq |t| < " << itT->second;
 
 		//loop over canvases for this t bin
-		for(size_t i = 0; i < 8; i++){
+		for(size_t i = 0; i < 9; i++){
 
 			//new
 			cans.push_back(
@@ -156,9 +191,6 @@ void AnalysisALU::plot(const std::string& path){
 						exit(0);
 					}
 
-					//check if not empty
-					if(itBin->getNEvents() == 0) continue;
-
 					//set pad
 					cans.back()->cd(1 + 
 						size_t(itXB - m_binRangesXB.begin()) + 
@@ -170,6 +202,8 @@ void AnalysisALU::plot(const std::string& path){
 						//histograms
 						TH1* h1 = itBin->getHDistributions().first;
 						TH1* h2 = itBin->getHDistributions().second;
+
+						if(h1 == nullptr || h2 == nullptr) continue;
 
 						//set minima
 						h1->SetMinimum(0.);
@@ -191,8 +225,10 @@ void AnalysisALU::plot(const std::string& path){
 					if(i == 1){
 
 						//histograms
-						TH1* h1 = itBin->getHDistributionsBorn().first;
-						TH1* h2 = itBin->getHDistributionsBorn().second;
+						TH1* h1 = itBin->getHDistributionsTrue().first;
+						TH1* h2 = itBin->getHDistributionsTrue().second;
+
+						if(h1 == nullptr || h2 == nullptr) continue;
 
 						//set minima
 						h1->SetMinimum(0.);
@@ -214,8 +250,8 @@ void AnalysisALU::plot(const std::string& path){
 					if(i == 2){
 
 						//histograms
-						TH1* h1 = itBin->getHDistributionsRC().first;
-						TH1* h2 = itBin->getHDistributionsRC().second;
+						TH1* h1 = itBin->getHDistributionsBorn().first;
+						TH1* h2 = itBin->getHDistributionsBorn().second;
 
 						if(h1 == nullptr || h2 == nullptr) continue;
 
@@ -264,8 +300,8 @@ void AnalysisALU::plot(const std::string& path){
 					if(i == 4){
 
 						//histograms
-						TH1* h1 = itBin->getHDistributionsCorrected().first;
-						TH1* h2 = itBin->getHDistributionsCorrected().second;
+						TH1* h1 = itBin->getHDistributionsRC().first;
+						TH1* h2 = itBin->getHDistributionsRC().second;
 
 						if(h1 == nullptr || h2 == nullptr) continue;
 
@@ -288,6 +324,31 @@ void AnalysisALU::plot(const std::string& path){
 
 					if(i == 5){
 
+						//histograms
+						TH1* h1 = itBin->getHDistributionsCorrected().first;
+						TH1* h2 = itBin->getHDistributionsCorrected().second;
+
+						if(h1 == nullptr || h2 == nullptr) continue;
+
+						//set minima
+						h1->SetMinimum(0.);
+						h2->SetMinimum(0.);
+
+						//colors
+						h1->SetLineColor(2);
+						h2->SetLineColor(4);
+
+						//no stats
+						h1->SetStats(0);
+						h2->SetStats(0);
+
+						//draw
+						h1->Draw();
+						h2->Draw("same");
+					}
+
+					if(i == 6){
+
 					 	//histogram
 					 	TH1* h = itBin->getHSum();
 
@@ -305,7 +366,7 @@ void AnalysisALU::plot(const std::string& path){
 					 	}
 					}
 
-					if(i == 6){
+					if(i == 7){
 
 					 	//histogram
 					 	TH1* h = itBin->getHDifference();
@@ -321,7 +382,7 @@ void AnalysisALU::plot(const std::string& path){
 					 	}
 					}
 
-					if(i == 7){
+					if(i == 8){
 
 					 	//histogram
 					 	TH1* h = itBin->getHAsymmetry();
@@ -385,9 +446,6 @@ void AnalysisALU::plot(const std::string& path){
 					exit(0);
 				}
 
-				//check if not empty
-				if(itBin->getNEvents() == 0) continue;
-
 				//add canvas
 				cans.push_back(new TCanvas(
 					(HashManager::getInstance()->getHash()).c_str(), ""));
@@ -395,6 +453,8 @@ void AnalysisALU::plot(const std::string& path){
 				//histograms
 				TH1* h1 = itBin->getHDistributions().first;
 				TH1* h2 = itBin->getHDistributions().second;
+
+				if(h1 == nullptr || h2 == nullptr) continue;
 
 				//set minima
 				h1->SetMinimum(0.);

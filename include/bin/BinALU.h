@@ -38,30 +38,6 @@ public:
 	//analyse
 	virtual void analyse();
 
-	//get range xB
-	const std::pair<double, double>& getRangeXB() const;
-
-	//get range Q2
-	const std::pair<double, double>& getRangeQ2() const;
-
-	//get range T
-	const std::pair<double, double>& getRangeT() const;
-
-	//get range phi
-	const std::pair<double, double>& getRangePhi() const;
-
-	//get mean xB
-	double getMeanXB() const;
-
-	//get mean Q2
-	double getMeanQ2() const;
-
-	//get mean t
-	double getMeanT() const;
-
-	//get mean phi
-	double getMeanPhi() const;
-
 	//get histograms to store events (Observed with lumi. limit)
 	const std::pair<TH1*, TH1*>& getHDistributions() const;
 
@@ -96,16 +72,6 @@ private:
 
 	//get appropriate histogram
 	TH1* getH(const std::pair<TH1*, TH1*>& histogramPair, int beamPolarisation) const;
-
-	std::pair<double, double> m_rangeXB;	//xB range
-	std::pair<double, double> m_rangeQ2;	//Q2 range
-	std::pair<double, double> m_rangeT;		//t range
-	std::pair<double, double> m_rangePhi;	//phi range
-
-	double m_sumXB;		//sum of xB values.
-	double m_sumQ2;		//sum of Q2 values.
-	double m_sumT;		//sum of t values.
-	double m_sumPhi;	//sum of phi values.
 
 	std::pair<TH1*, TH1*> m_hDistributions;		//histograms to store events
 	std::pair<TH1*, TH1*> m_hDistributionsObserved;	//histograms to store events (True kinematics)

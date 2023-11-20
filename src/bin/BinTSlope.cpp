@@ -10,16 +10,11 @@ BinTSlope::BinTSlope(
 	const std::pair<double, double>& rangeQ2, 
 	size_t nTBins,
 	const std::pair<double, double>& rangeT
-) : Bin("BinTSlope"), m_lumiALL(0.), m_lumiBH(0.) {
+) : Bin("BinTSlope", rangeXB, rangeQ2, rangeT, std::make_pair(0., 2 * M_PI)), m_lumiALL(0.), m_lumiBH(0.) {
 
 	//reset
 	reset();
-
-	//set ranges
-	m_rangeXB = checkRange(rangeXB);
-	m_rangeQ2 = checkRange(rangeQ2);
-	m_rangeT = checkRange(rangeT);
-
+ 
 	//make histograms
  	for(size_t i = 0; i < 6; i++){
 
@@ -48,7 +43,7 @@ BinTSlope::BinTSlope(
 	//function for fitting
 	m_fFit = new TF1((HashManager::getInstance()->getHash()).c_str(), "[0]*exp(-1*[1]*x)", 0., 2.);
 
-	m_fFit->SetParameter(0, m_sumWeights);
+	m_fFit->SetParameter(0, 100.);
 	m_fFit->SetParameter(1, 5.);
 
 }
@@ -60,19 +55,6 @@ void BinTSlope::reset(){
 
 	//run for parent class
 	Bin::reset();
-
-	//reset ranges
-	m_rangeXB = std::make_pair(0., 0.);
-	m_rangeQ2 = std::make_pair(0., 0.);
-	m_rangeT = std::make_pair(0., 0.);
-
-	//reset sums
-	m_sumXB = 0.;
-	m_sumQ2 = 0.;
-	m_sumT = 0.;
-
-	//reset number of events
-	m_nEvents = 0;
 
 	//reset histograms
 	m_hDistributions.clear();
@@ -91,14 +73,11 @@ void BinTSlope::fill(DVCSEvent& event, double weight){
 
 		if(weight > 0.){
 
-			if(event.isReconstructed()) m_hDistributions.at(0)->Fill(-1 * event.getT());
-
 			//kinematics
 			Bin::fill(event);
 
-			m_sumXB += event.getXB();
-			m_sumQ2 += event.getQ2();
-			m_sumT += event.getT();
+			//fill
+			if(event.isReconstructed()) m_hDistributions.at(0)->Fill(-1 * event.getT());
 		}
 
 		m_hDistributions.at(2)->Fill(-1 * event.getT(KinematicsType::True));
@@ -127,15 +106,12 @@ void BinTSlope::analyse(){
 }
 
 void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
-
-	//print
-	std::cout << "=================================================================" << std::endl;
 	
 	//run for parent class
 	Bin::analyse();
 
 	//skip bins with low entry count
-	if(m_nEvents < 2000){
+	if(getNEvents(KinematicsType::Observed) < 2000){
 		return;
 	}
 
@@ -218,7 +194,7 @@ void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
 	}
 
 	//print
-	std::cout << "NUCLEON_TOMOGRAPHY{" << getMeanXB() << ", " << getMeanQ2() << ", " << m_hTSlope->GetNbinsX() << ", " << m_hTSlope->GetXaxis()->GetXmin() << ", " << m_hTSlope->GetXaxis()->GetXmax();
+	// std::cout << "NUCLEON_TOMOGRAPHY{" << getMeanXB() << ", " << getMeanQ2() << ", " << m_hTSlope->GetNbinsX() << ", " << m_hTSlope->GetXaxis()->GetXmin() << ", " << m_hTSlope->GetXaxis()->GetXmax();
 	for(size_t i = 1; i <= m_hTSlope->GetNbinsX(); i++){
 		std::cout << ", " << m_hTSlope->GetBinContent(i) << ", " << m_hTSlope->GetBinError(i);
 	}
@@ -232,33 +208,11 @@ void BinTSlope::print() const{
 
 	//print
 	std::cout << __func__ << " debug: " << 
-		"range xB: min: " << m_rangeXB.first << " max: " << m_rangeXB.second << " mean (from events): " << getMeanXB() << std::endl;
+		"range xB: min: " << m_rangeXB.first << " max: " << m_rangeXB.second << " mean (from events): " << 
+		getMeanXB(KinematicsType::Observed) << ' ' << getMeanXB(KinematicsType::True) << ' ' << getMeanXB(KinematicsType::Born) << std::endl;
 	std::cout << __func__ << " debug: " << 
-		"range Q2: min: " << m_rangeQ2.first << " max: " << m_rangeQ2.second << " mean (from events): " << getMeanQ2() << std::endl;
-}
-
-const std::pair<double, double>& BinTSlope::getRangeXB() const{
-	return m_rangeXB;
-}
-
-const std::pair<double, double>& BinTSlope::getRangeQ2() const{
-	return m_rangeQ2;
-}
-
-const std::pair<double, double>& BinTSlope::getRangeT() const{
-	return m_rangeT;
-}
-
-double BinTSlope::getMeanXB() const{
-	return getMean(m_sumXB, m_sumWeights);
-}
-
-double BinTSlope::getMeanQ2() const{
-	return getMean(m_sumQ2, m_sumWeights);
-}
-
-double BinTSlope::getMeanT() const{
-	return getMean(m_sumT, m_sumWeights);
+		"range Q2: min: " << m_rangeQ2.first << " max: " << m_rangeQ2.second << " mean (from events): " << 
+		getMeanQ2(KinematicsType::Observed) << ' ' << getMeanQ2(KinematicsType::True) << ' ' << getMeanQ2(KinematicsType::Born) << std::endl;
 }
 
 const std::vector<TH1*>& BinTSlope::getHDistributions() const{

@@ -77,6 +77,12 @@ void AnalysisTSlope::analyse(){
 	for(std::vector<BinTSlope>::iterator it = m_bins.begin(); 
 		it != m_bins.end(); it++){
 
+		//print
+		std::cout << "=== T-SLOPE BIN START ==========================================================" << std::endl;
+
+		//print
+		it->print();
+
 		//make analysis
 		it->analyse(m_lumiALL, m_lumiBH);
 
@@ -84,11 +90,12 @@ void AnalysisTSlope::analyse(){
 		FitResult* fitResult = it->getFitResult();
 
 		//check if not empty
-		if(fitResult == nullptr) continue;
+		if(fitResult != nullptr){
+			fitResult->print();
+		}
 
 		//print
-		it->print();
-		fitResult->print();
+		std::cout << "=== T-SLOPE BIN END ============================================================" << std::endl;
 	}
 }
 
