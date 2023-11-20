@@ -33,52 +33,51 @@ public:
 private:
 
 	//evaluate acceptance
-	TH1* evaluateAcceptance(TH1** h) const;
+	TH1* evaluateAcceptance(TH1** h, bool isAcceptance) const;
+	TH2* evaluateAcceptance(TH2** h, bool isAcceptance) const;
 
 	//luminosity corresponding to accumulated luminosity
 	double m_lumi;
 
 	//reconstruction probabilities
-	double m_resProbPOut[2];
-	double m_resProbEOut[2];
-	double m_resProbGOut[2];
+	double m_resProbPOut[3];
+	double m_resProbEOut[3];
+	double m_resProbGOut[3];
 
-	double m_resProbExcl[2];
+	double m_resProbExcl[3];
 
 	//2D histograms
-	TH2* m_hXBvsQ2;
-	TH2* m_hxBvsQ2[2];
-	TH2* m_hXBvsT[2];
-	TH2* m_hXBvsY[2];
-	TH2* m_hQ2vsT[2];
-	TH2* m_hYvsT[2];
-	TH2* m_hQ2vsY[2];
+	TH2* m_hxBvsQ2[5];
+	TH2* m_hxBvsTOverQ2[5];
+	TH2* m_hXBvsT[5];
+	TH2* m_hXBvsY[5];
+	TH2* m_hQ2vsT[5];
+	TH2* m_hYvsT[5];
+	TH2* m_hQ2vsY[5];
 
 	//1D histograms
-	TH1* m_hXB[2];
-	TH1* m_hQ2[2];
-	TH1* m_hT[2];
-	TH1* m_hPhi[2];
-	TH1* m_hPhiS[2];
-	TH1* m_hY[2];
-	TH1* m_hEtaEOut[2];
-	TH1* m_hEtaPOut[2];
-	TH1* m_hEtaGOut[2];
-	TH1* m_hPPOut[2];
-	TH1* m_hPPtOut[2];
-	TH1* m_hPThOut[2];
-	TH1* m_hPPhOut[2];
-	TH1* m_hEPOut[2];
-	TH1* m_hEPtOut[2];
-	TH1* m_hEThOut[2];
-	TH1* m_hEPhOut[2];
-	TH1* m_hGPOut[2];
-	TH1* m_hGPtOut[2];
-	TH1* m_hGThOut[2];
-	TH1* m_hGPhOut[2];
-	
-	TH1* m_hRatio[21];
-		
+	TH1* m_hXB[5];
+	TH1* m_hQ2[5];
+	TH1* m_hT[5];
+	TH1* m_hPhi[5];
+	TH1* m_hPhiS[5];
+	TH1* m_hY[5];
+	TH1* m_hEtaEOut[5];
+	TH1* m_hEtaPOut[5];
+	TH1* m_hEtaGOut[5];
+	TH1* m_hPPOut[5];
+	TH1* m_hPPtOut[5];
+	TH1* m_hPThOut[5];
+	TH1* m_hPPhOut[5];
+	TH1* m_hEPOut[5];
+	TH1* m_hEPtOut[5];
+	TH1* m_hEThOut[5];
+	TH1* m_hEPhOut[5];
+	TH1* m_hGPOut[5];
+	TH1* m_hGPtOut[5];
+	TH1* m_hGThOut[5];
+	TH1* m_hGPhOut[5];
+			
 	TLegend* leg[6];
 };
 #endif
