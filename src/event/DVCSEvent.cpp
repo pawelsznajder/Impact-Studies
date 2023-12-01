@@ -566,7 +566,7 @@ TLorentzVector DVCSEvent::getGammaFSR(const GenEvent& evt, KinematicsType::Type 
                 //FSR
                 if((*it)->parents().size() == 1){
 
-                           if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 1 && (*it)->production_vertex()->particles_out().size() == 2){
+                           if((*it)->parents().at(0)->pid() == 11 && (*it)->parents().at(0)->status() == 3 && (*it)->production_vertex()->particles_out().size() == 2){
                            
                                 bool hasE = false;
                                 bool hasGamma = false;
