@@ -123,43 +123,53 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 	//fill 1D histograms
 	for(size_t i = 0; i < 3; i++){
 
+		//type (kinematicsTypePlotted - only geometric acceptance here)
+		KinematicsType::Type kinematicsType, kinematicsTypePlotted;
+
+		if(i == 0) {kinematicsType = KinematicsType::Observed; kinematicsTypePlotted = KinematicsType::True;}
+		if(i == 1) {kinematicsType = KinematicsType::True; kinematicsTypePlotted = kinematicsType;}
+		if(i == 2) {kinematicsType = KinematicsType::Born; kinematicsTypePlotted = kinematicsType;}
+
+		if (event.getPOut(kinematicsType).E() > 0.) {
+
+			m_resProbPOut[i]++;
+
+			m_hPPOut[i]->Fill(event.getPOut(kinematicsTypePlotted).P());
+			m_hPPtOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Pt());
+			m_hPThOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Theta()*1000.);
+			m_hPPhOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Phi());
+			m_hEtaPOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Eta());
+		}
+		if (event.getEOut(kinematicsType).E() > 0.) { 
+
+			m_resProbEOut[i]++;
+
+			m_hEPOut[i]->Fill(event.getEOut(kinematicsTypePlotted).P());
+			m_hEPtOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Pt());
+			m_hEThOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Theta());
+			m_hEPhOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Phi());
+			m_hEtaEOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Eta());
+		}
+		if (event.getGammaOut(kinematicsType).E() > 0.) { 
+
+			m_resProbGOut[i]++;
+
+			m_hGPOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).P());
+			m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Pt());
+			m_hGThOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Theta());
+			m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Phi());
+			m_hEtaGOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Eta());
+		}
+	}
+
+	for(size_t i = 0; i < 3; i++){
+
 		//type
 		KinematicsType::Type kinematicsType;
 
 		if(i == 0) kinematicsType = KinematicsType::Observed;
 		if(i == 1) kinematicsType = KinematicsType::True;
 		if(i == 2) kinematicsType = KinematicsType::Born;
-
-		if (event.getPOut(kinematicsType).E() > 0.) {
-
-			m_resProbPOut[i]++;
-
-			m_hPPOut[i]->Fill(event.getPOut(kinematicsType).P());
-			m_hPPtOut[i]->Fill(event.getPOut(kinematicsType).Pt());
-			m_hPThOut[i]->Fill(event.getPOut(kinematicsType).Theta()*1000.);
-			m_hPPhOut[i]->Fill(event.getPOut(kinematicsType).Phi());
-			m_hEtaPOut[i]->Fill(event.getPOut(kinematicsType).Eta());
-		}
-		if (event.getEOut(kinematicsType).E() > 0.) { 
-
-			m_resProbEOut[i]++;
-
-			m_hEPOut[i]->Fill(event.getEOut(kinematicsType).P());
-			m_hEPtOut[i]->Fill(event.getEOut(kinematicsType).Pt());
-			m_hEThOut[i]->Fill(event.getEOut(kinematicsType).Theta());
-			m_hEPhOut[i]->Fill(event.getEOut(kinematicsType).Phi());
-			m_hEtaEOut[i]->Fill(event.getEOut(kinematicsType).Eta());
-		}
-		if (event.getGammaOut(kinematicsType).E() > 0.) { 
-
-			m_resProbGOut[i]++;
-
-			m_hGPOut[i]->Fill(event.getGammaOut(kinematicsType).P());
-			m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsType).Pt());
-			m_hGThOut[i]->Fill(event.getGammaOut(kinematicsType).Theta());
-			m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsType).Phi());
-			m_hEtaGOut[i]->Fill(event.getGammaOut(kinematicsType).Eta());
-		}
 
 		if (event.getPOut(kinematicsType).E() > 0. && event.getEOut(kinematicsType).E() > 0. && event.getGammaOut(kinematicsType).E() > 0.){
 
