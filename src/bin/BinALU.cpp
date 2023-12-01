@@ -255,11 +255,11 @@ TH1* BinALU::getH(const std::pair<TH1*, TH1*>& histogramPair, int beamPolarisati
 	switch(beamPolarisation){
 
 	 	case -1:{
-	 		return histogramPair.first;
+	 		return histogramPair.second;
 	 	}
 
 	   	case 1:{
-	 		return histogramPair.second;
+	 		return histogramPair.first;
 	   	}
 
 	   default:{
