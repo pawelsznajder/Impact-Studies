@@ -9,6 +9,7 @@
 
 #include "../../include/other/HashManager.h"
 #include "../../include/other/SubProcessType.h"
+#include "../../include/kinematic_cuts/KinematicCuts.h"
 
 AnalysisTSlope::AnalysisTSlope(double targetLuminosity) : Analysis("AnalysisTSlope", targetLuminosity),
 	m_lumiALL(0.), m_lumiBH(0.){
@@ -56,6 +57,9 @@ void AnalysisTSlope::fill(DVCSEvent& event, double weight){
 	){
 		m_lumiBH += weight;
 	}
+
+	//cuts (must be implemented after counting the lumi)
+	if(! KinematicCuts::checkKinematicCuts(event, KinematicsType::Observed)) return;
 
 	//fill
 	for(std::vector<BinTSlope>::iterator it = m_bins.begin(); 

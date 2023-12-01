@@ -5,6 +5,7 @@
 #include <TCanvas.h>
 
 #include "../../include/other/HashManager.h"
+#include "../../include/kinematic_cuts/KinematicCuts.h"
 
 AnalysisALU::AnalysisALU(double targetLuminosity) : Analysis("AnalysisALU", targetLuminosity), 
 	m_lumiM(0.), m_lumiP(0.){
@@ -59,6 +60,9 @@ void AnalysisALU::fill(DVCSEvent& event, double weight){
 			exit(0);
        }
 	}
+
+	//cuts (must be implemented after counting the lumi)
+	if(! KinematicCuts::checkKinematicCuts(event, KinematicsType::Observed)) return;
 
 	//fill
 	KinematicsType::Type kinematicsType;

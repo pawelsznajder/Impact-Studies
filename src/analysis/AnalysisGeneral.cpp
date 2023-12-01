@@ -6,6 +6,7 @@
 #include <TLegend.h>
 
 #include "../../include/other/HashManager.h"
+#include "../../include/kinematic_cuts/KinematicCuts.h"
 
 AnalysisGeneral::AnalysisGeneral(double targetLuminosity) : Analysis("AnalysisGeneral", targetLuminosity), 
 	m_lumi(0.){
@@ -40,7 +41,7 @@ AnalysisGeneral::AnalysisGeneral(double targetLuminosity) : Analysis("AnalysisGe
 		m_hYvsT[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, 0., 0.7, nbin, 0., 1.6);
 		m_hQ2vsY[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, 0., 2.2, nbin, 0., 0.7);
 
-		m_hXB[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "log(x_{B})",nbin, -5., 0.);
+		m_hXB[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "log(x_{B})",nbin, -4., 0.);
 		m_hQ2[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "log(Q^{2})",nbin, 0., 2.);
 		m_hT[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "|t|",nbin, 0., 1.2);
 		m_hPhi[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "#varphi [rad]",nbin, 0., 2.*TMath::Pi());
@@ -115,6 +116,9 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 	//luminosity
 	if(m_lumi >= m_targetLuminosity) return;
 	m_lumi += weight;
+
+	//cuts (must be implemented after counting the lumi)
+	if(! KinematicCuts::checkKinematicCuts(event, KinematicsType::Observed)) return;
 
 	//fill 1D histograms
 	for(size_t i = 0; i < 3; i++){
