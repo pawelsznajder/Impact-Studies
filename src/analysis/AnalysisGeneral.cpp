@@ -24,6 +24,9 @@ AnalysisGeneral::AnalysisGeneral(double targetLuminosity) : Analysis("AnalysisGe
 		m_resProbExcl[i] = 0;
 	}
 
+	m_resCut[0] = 0;
+	m_resCut[1] = 0;
+
 	//set 1D and 2D histograms
 	for(size_t i = 0; i < 3; i++){
 			
@@ -118,7 +121,9 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 	m_lumi += weight;
 
 	//cuts (must be implemented after counting the lumi)
+	m_resCut[0]++;
 	if(! KinematicCuts::checkKinematicCuts(event, KinematicsType::Observed)) return;
+	m_resCut[1]++;
 
 	//fill 1D histograms
 	for(size_t i = 0; i < 3; i++){
@@ -208,6 +213,8 @@ void AnalysisGeneral::plot(const std::string& path){
 		m_resProbGOut[0] << "\tratio: " << m_resProbGOut[0]/double(m_resProbGOut[1]) << std::endl;
 	std::cout << "info: " << __func__ << ": all: generated: " << m_resProbExcl[1] << "\treconstructed: " << 
 		m_resProbExcl[0] << "\tratio: " << m_resProbExcl[0]/double(m_resProbExcl[1]) << std::endl;
+	std::cout << "info: " << __func__ << ": all: generated: " << m_resCut[0] << "\tafter cut: " << 
+		m_resCut[1] << "\tratio: " << m_resCut[1]/double(m_resCut[0]) << std::endl;
 
 	//Clone and make ratio of histograms
 	for(int i = 0; i < 2; i++){

@@ -7,7 +7,6 @@
 
 #include "../include/analysis/AnalysisGeneral.h"
 //#include "../include/analysis/AnalysisEpIC.h"
-#include "../include/analysis/AnalysisGeneralRC.h"
 #include "../include/analysis/AnalysisALU.h"
 #include "../include/analysis/AnalysisTSlope.h"
 #include "../include/other/SubProcessType.h"
@@ -59,7 +58,6 @@ int main(int argc, char* argv[]){
 	//analysis objects
 	AnalysisGeneral analysisGeneral(targetIntegratedLuminosityFb);
 //	AnalysisEpIC analysisEpIC;
-	// AnalysisGeneralRC analysisGeneralRC;
 	AnalysisALU analysisALU(targetIntegratedLuminosityFb);
 	AnalysisTSlope analysisTSlope(targetIntegratedLuminosityFb);
 
@@ -280,12 +278,12 @@ int main(int argc, char* argv[]){
 						double weight = 1/crossSection.at(iFile).first/1.E6;
 
 						//fill
-	               	 	// analysisGeneral.fill(dvcsEvent, weight);
-	               	 	// if(integratedLuminosityFbALL[0]+integratedLuminosityFbALL[1]>=targetIntegratedLuminosityFb){
-	               	 	// 	std::cout << "GENERAL_DONE" << std::endl;
-	               	 	// 	break;
-	               	 	// }
-						analysisALU.fill(dvcsEvent, weight);
+	               	 	if(integratedLuminosityFbALL[0]+integratedLuminosityFbALL[1]>=targetIntegratedLuminosityFb){
+	               	 		std::cout << "GENERAL_DONE" << std::endl;
+	               	 		break;
+	               	 	}
+	               	 	analysisGeneral.fill(dvcsEvent, weight);
+						// analysisALU.fill(dvcsEvent, weight);
 						// analysisTSlope.fill(dvcsEvent, weight);
 
 						//counter
@@ -306,17 +304,15 @@ int main(int argc, char* argv[]){
 	// return 0;
    
 	//analyse
-	// analysisGeneral.analyse();
+	analysisGeneral.analyse();
 	//analysisEpIC.analyse();
-	// analysisGeneralRC.analyse();
-	analysisALU.analyse();
+	// analysisALU.analyse();
 	// analysisTSlope.analyse();
 
 	//print
-	// analysisGeneral.plot("analysisGeneral.pdf");
+	analysisGeneral.plot("analysisGeneral.pdf");
 	//analysisEpIC.plot("analysisEpIC.pdf");
-	// analysisGeneralRC.plot("analysisGeneralRC.pdf");
-	analysisALU.plot("analysisALU.pdf");
+	// analysisALU.plot("analysisALU.pdf");
 	// analysisTSlope.plot("analysisTSlope.pdf");
 
 	std::cout << __func__ << ": info: target luminosity: " << 

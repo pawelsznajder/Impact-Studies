@@ -43,8 +43,8 @@ private:
 	double m_resProbPOut[3];
 	double m_resProbEOut[3];
 	double m_resProbGOut[3];
-
 	double m_resProbExcl[3];
+	double m_resCut[2];
 
 	//2D histograms
 	TH2* m_hxBvsQ2[5];
