@@ -9,10 +9,14 @@
 #include "../../include/kinematic_cuts/KinematicCuts.h"
 
 AnalysisGeneral::AnalysisGeneral(double targetLuminosity) : Analysis("AnalysisGeneral", targetLuminosity), 
-	m_lumi(0.){
+	m_lumiM(0.), m_lumiP(0.){
 
 	//number of bins 
 	int nbin = 100;
+
+	//cuts
+	m_resCut[0] = 0;
+	m_resCut[1] = 0;
 
 	//reconstruction probabilities
 	for(size_t i = 0; i < 3; i++){
@@ -24,9 +28,6 @@ AnalysisGeneral::AnalysisGeneral(double targetLuminosity) : Analysis("AnalysisGe
 		m_resProbExcl[i] = 0;
 	}
 
-	m_resCut[0] = 0;
-	m_resCut[1] = 0;
-
 	//set 1D and 2D histograms
 	for(size_t i = 0; i < 3; i++){
 			
@@ -36,20 +37,15 @@ AnalysisGeneral::AnalysisGeneral(double targetLuminosity) : Analysis("AnalysisGe
 		if(i == 1) title = " (true)";
 		if(i == 2) title = " (born)";
 	
-		m_hxBvsQ2[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, -4., 0., nbin, 0., 2.);
-		m_hxBvsTOverQ2[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, -4., 0., nbin, -3., 1.);
-		m_hXBvsT[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, -3.5, -0.2, nbin, 0., 1.6);
-		m_hXBvsY[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, -3.5, -0.2, nbin, 0., 0.7);
-		m_hQ2vsT[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, 0., 2.2, nbin, 0., 1.6);
-		m_hYvsT[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, 0., 0.7, nbin, 0., 1.6);
-		m_hQ2vsY[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, 0., 2.2, nbin, 0., 0.7);
+		m_hxBvsQ2[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, -5., 0., nbin, 0., 2.);
+		m_hxBvsTOverQ2[i] = new TH2D((HashManager::getInstance()->getHash()).c_str(), title.c_str(), nbin, -5., 0., nbin, -3., 1.);
 
-		m_hXB[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "log(x_{B})",nbin, -4., 0.);
+		m_hXB[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "log(x_{B})",nbin, -5., 0.);
 		m_hQ2[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "log(Q^{2})",nbin, 0., 2.);
-		m_hT[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "|t|",nbin, 0., 1.2);
+		m_hT[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "|t|",nbin, 0.05, 1.2);
 		m_hPhi[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "#varphi [rad]",nbin, 0., 2.*TMath::Pi());
 		m_hPhiS[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "#varphi_{S} [rad]",nbin, 0., 2.*TMath::Pi());
-		m_hY[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "y",	nbin, 0., 0.6);
+		m_hY[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "y",nbin, 0.05, 0.6);
 		m_hEtaEOut[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "#eta e'",nbin, -4., 0.);
 		m_hEtaPOut[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "#eta p'",nbin, 3., 9.);
 		m_hEtaGOut[i] = new TH1D((HashManager::getInstance()->getHash()).c_str(), "#eta #gamma'",nbin, -10., 5.);
@@ -88,7 +84,6 @@ TH1* AnalysisGeneral::evaluateAcceptance(TH1** h, bool isRC) const{
 	return acc;
 }
 
-
 TH2* AnalysisGeneral::evaluateAcceptance(TH2** h, bool isRC) const{
 
 	TH2* acc;
@@ -116,58 +111,94 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 		)
 	) return;
 
-	//luminosity
-	if(m_lumi >= m_targetLuminosity) return;
-	m_lumi += weight;
+	//only to reach target luminosity
+	switch(event.getBeamPolarisation()){
 
-	//cuts (must be implemented after counting the lumi)
-	m_resCut[0]++;
-	if(! KinematicCuts::checkKinematicCuts(event, KinematicsType::Observed)) return;
+   	 	case -1:{
+
+   	 		if(m_lumiM >= m_targetLuminosity/2.) return;
+   	 		m_lumiM += weight;
+
+   	 		break;
+   	 	}
+
+       	case 1:{
+
+			if(m_lumiP >= m_targetLuminosity/2.) return;
+   	 		m_lumiP += weight;
+
+       	 	break;
+       	}
+
+       default:{
+       		std::cout << __func__ << " error: wrong beam polarisation state, " << event.getBeamPolarisation() << std::endl;
+			exit(0);
+       }
+	}
+
+	//number of events after restricting the kinematic donain
 	m_resCut[1]++;
+	if(KinematicCuts::checkKinematicCuts(event, KinematicsType::True)) m_resCut[0]++;
 
 	//fill 1D histograms
-	for(size_t i = 0; i < 3; i++){
+	//only for interesting (physics-wise motivated) kinematics (i.e. restricted kinematics)
+	if(KinematicCuts::checkKinematicCuts(event, KinematicsType::True)){
 
-		//type (kinematicsTypePlotted - only geometric acceptance here)
-		KinematicsType::Type kinematicsType, kinematicsTypePlotted;
+		for(size_t i = 0; i < 3; i++){
 
-		if(i == 0) {kinematicsType = KinematicsType::Observed; kinematicsTypePlotted = KinematicsType::True;}
-		if(i == 1) {kinematicsType = KinematicsType::True; kinematicsTypePlotted = kinematicsType;}
-		if(i == 2) {kinematicsType = KinematicsType::Born; kinematicsTypePlotted = kinematicsType;}
+			//skip Born
+			if(i == 2) continue;
 
-		if (event.getPOut(kinematicsType).E() > 0.) {
+			//type (kinematicsTypePlotted - only geometric acceptance here)
+			KinematicsType::Type kinematicsType, kinematicsTypePlotted;
 
-			m_resProbPOut[i]++;
+			if(i == 0) {kinematicsType = KinematicsType::Observed; kinematicsTypePlotted = KinematicsType::True;}
+			if(i == 1) {kinematicsType = KinematicsType::True; kinematicsTypePlotted = kinematicsType;}
+			if(i == 2) {kinematicsType = KinematicsType::Born; kinematicsTypePlotted = kinematicsType;}
 
-			m_hPPOut[i]->Fill(event.getPOut(kinematicsTypePlotted).P());
-			m_hPPtOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Pt());
-			m_hPThOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Theta()*1000.);
-			m_hPPhOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Phi());
-			m_hEtaPOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Eta());
-		}
-		if (event.getEOut(kinematicsType).E() > 0.) { 
+			if (event.getPOut(kinematicsType).E() > 0.) {
 
-			m_resProbEOut[i]++;
+				m_resProbPOut[i]++;
 
-			m_hEPOut[i]->Fill(event.getEOut(kinematicsTypePlotted).P());
-			m_hEPtOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Pt());
-			m_hEThOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Theta());
-			m_hEPhOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Phi());
-			m_hEtaEOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Eta());
-		}
-		if (event.getGammaOut(kinematicsType).E() > 0.) { 
+				m_hPPOut[i]->Fill(event.getPOut(kinematicsTypePlotted).P());
+				m_hPPtOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Pt());
+				m_hPThOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Theta()*1000.);
+				m_hPPhOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Phi());
+				m_hEtaPOut[i]->Fill(event.getPOut(kinematicsTypePlotted).Eta());
+			}
 
-			m_resProbGOut[i]++;
+			if (event.getEOut(kinematicsType).E() > 0.) { 
 
-			m_hGPOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).P());
-			m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Pt());
-			m_hGThOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Theta());
-			m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Phi());
-			m_hEtaGOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Eta());
+				m_resProbEOut[i]++;
+
+				m_hEPOut[i]->Fill(event.getEOut(kinematicsTypePlotted).P());
+				m_hEPtOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Pt());
+				m_hEThOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Theta());
+				m_hEPhOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Phi());
+				m_hEtaEOut[i]->Fill(event.getEOut(kinematicsTypePlotted).Eta());
+			}
+
+			if (event.getGammaOut(kinematicsType).E() > 0.) { 
+
+				m_resProbGOut[i]++;
+
+				m_hGPOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).P());
+				m_hGPtOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Pt());
+				m_hGThOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Theta());
+				m_hGPhOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Phi());
+				m_hEtaGOut[i]->Fill(event.getGammaOut(kinematicsTypePlotted).Eta());
+			}
+
+			if(event.getPOut(kinematicsType).E() > 0. && event.getEOut(kinematicsType).E() > 0. && event.getGammaOut(kinematicsType).E() > 0.){
+				m_resProbExcl[i]++;
+			}
 		}
 	}
 
 	for(size_t i = 0; i < 3; i++){
+
+		//skip Born
+		if(i == 2) continue;
 
 		//type
 		KinematicsType::Type kinematicsType;
@@ -176,24 +207,27 @@ void AnalysisGeneral::fill(DVCSEvent& event, double weight){
 		if(i == 1) kinematicsType = KinematicsType::True;
 		if(i == 2) kinematicsType = KinematicsType::Born;
 
+		//the rest acts as backround
 		if (event.getPOut(kinematicsType).E() > 0. && event.getEOut(kinematicsType).E() > 0. && event.getGammaOut(kinematicsType).E() > 0.){
 
-			m_resProbExcl[i]++;
+			if(KinematicCuts::checkKinematicCuts(event, kinematicsType), 3)
+				m_hXB[i]->Fill(log10(event.getXB(kinematicsType)));
+			if(KinematicCuts::checkKinematicCuts(event, kinematicsType), 2)
+				m_hQ2[i]->Fill(log10(event.getQ2(kinematicsType)));
 
-			m_hXB[i]->Fill(log10(event.getXB(kinematicsType)));
-			m_hQ2[i]->Fill(log10(event.getQ2(kinematicsType)));
-			m_hT[i]->Fill(fabs(event.getT(kinematicsType)));
 			m_hPhi[i]->Fill(event.getPhi(kinematicsType));
 			m_hPhiS[i]->Fill(event.getPhiS(kinematicsType));
-			m_hY[i]->Fill(event.getY(kinematicsType));
 
-			m_hxBvsQ2[i]->Fill(log10(event.getXB(kinematicsType)), log10(event.getQ2(kinematicsType)));
-			m_hxBvsTOverQ2[i]->Fill(log10(event.getXB(kinematicsType)), log10(fabs(event.getT(kinematicsType))/event.getQ2(kinematicsType)));
-			m_hXBvsT[i]->Fill(log10(event.getXB(kinematicsType)), fabs(event.getT(kinematicsType)));
-			m_hXBvsY[i]->Fill(log10(event.getXB(kinematicsType)), event.getY(kinematicsType));
-			m_hQ2vsT[i]->Fill(log10(event.getQ2(kinematicsType)), fabs(event.getT(kinematicsType)));
-			m_hYvsT[i]->Fill(event.getY(kinematicsType), fabs(event.getT(kinematicsType)));
-			m_hQ2vsY[i]->Fill(log10(event.getQ2(kinematicsType)), event.getY(kinematicsType));
+			if(KinematicCuts::checkKinematicCuts(event, kinematicsType, 0))
+				m_hT[i]->Fill(fabs(event.getT(kinematicsType)));
+
+			if(KinematicCuts::checkKinematicCuts(event, kinematicsType, 1))
+				m_hY[i]->Fill(event.getY(kinematicsType));
+
+			if(KinematicCuts::checkKinematicCuts(event, kinematicsType))
+				m_hxBvsQ2[i]->Fill(log10(event.getXB(kinematicsType)), log10(event.getQ2(kinematicsType)));
+			if(KinematicCuts::checkKinematicCuts(event, kinematicsType))
+				m_hxBvsTOverQ2[i]->Fill(log10(event.getXB(kinematicsType)), log10(fabs(event.getT(kinematicsType))/event.getQ2(kinematicsType)));
 		}
 	}
 }
@@ -205,27 +239,22 @@ void AnalysisGeneral::analyse(){
 void AnalysisGeneral::plot(const std::string& path){
 
 	//print reconstruction probabilities
+	std::cout << "info: " << __func__ << ":  resticted kinematic domain: all " << m_resCut[1] << "\tin: " << 
+		m_resCut[0] << "\tratio: " << m_resCut[0]/double(m_resCut[1]) << std::endl;
 	std::cout << "info: " << __func__ << ":  p': generated: " << m_resProbPOut[1] << "\treconstructed: " << 
 		m_resProbPOut[0] << "\tratio: " << m_resProbPOut[0]/double(m_resProbPOut[1]) << std::endl;
 	std::cout << "info: " << __func__ << ":  e': generated: " << m_resProbEOut[1] << "\treconstructed: " << 
 		m_resProbEOut[0] << "\tratio: " << m_resProbEOut[0]/double(m_resProbEOut[1]) << std::endl;
 	std::cout << "info: " << __func__ << ": gam: generated: " << m_resProbGOut[1] << "\treconstructed: " << 
 		m_resProbGOut[0] << "\tratio: " << m_resProbGOut[0]/double(m_resProbGOut[1]) << std::endl;
-	std::cout << "info: " << __func__ << ": all: generated: " << m_resProbExcl[1] << "\treconstructed: " << 
+	std::cout << "info: " << __func__ << ": exc: generated: " << m_resProbExcl[1] << "\treconstructed: " << 
 		m_resProbExcl[0] << "\tratio: " << m_resProbExcl[0]/double(m_resProbExcl[1]) << std::endl;
-	std::cout << "info: " << __func__ << ": all: generated: " << m_resCut[0] << "\tafter cut: " << 
-		m_resCut[1] << "\tratio: " << m_resCut[1]/double(m_resCut[0]) << std::endl;
 
 	//Clone and make ratio of histograms
 	for(int i = 0; i < 2; i++){
 
 		m_hxBvsQ2[3+i] = evaluateAcceptance(m_hxBvsQ2, i);
 		m_hxBvsTOverQ2[3+i] = evaluateAcceptance(m_hxBvsTOverQ2, i);
-		m_hXBvsT[3+i] = evaluateAcceptance(m_hXBvsT, i);
-		m_hXBvsY[3+i] = evaluateAcceptance(m_hXBvsY, i);
-		m_hQ2vsT[3+i] = evaluateAcceptance(m_hQ2vsT, i);
-		m_hYvsT[3+i] = evaluateAcceptance(m_hYvsT, i);
-		m_hQ2vsY[3+i] = evaluateAcceptance(m_hQ2vsY, i);
 
 		m_hPPOut[3+i] = evaluateAcceptance(m_hPPOut, i);
 		m_hPPtOut[3+i] = evaluateAcceptance(m_hPPtOut, i);
@@ -280,7 +309,7 @@ void AnalysisGeneral::plot(const std::string& path){
 	}
 
 	//loop over canvases
-	for(size_t i = 0; i < 6; i++){
+	for(size_t i = 0; i < 5; i++){
 
 		//add canvas
 		cans.push_back(
@@ -398,84 +427,6 @@ void AnalysisGeneral::plot(const std::string& path){
 		}
 
 		if (i == 2){
-			
-			cans.back()->Divide(4,4);
-			
-			cans.back()->cd(1);
-			m_hxBvsQ2[0]->Draw("colz");
-			m_hxBvsQ2[0]->GetXaxis()->SetTitle("log(X_{B})");
-			m_hxBvsQ2[0]->GetYaxis()->SetTitle("log(Q^{2} [(GeV/c)^{2}])");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(2);
-			m_hxBvsQ2[1]->Draw("colz");
-			m_hxBvsQ2[1]->GetXaxis()->SetTitle("log(X_{B})");
-			m_hxBvsQ2[1]->GetYaxis()->SetTitle("log(Q^{2} [(GeV/c)^{2}])");
-			cans.back()->SetLogz();
-
-			cans.back()->cd(3);
-			m_hXBvsT[0]->Draw("colz");
-			m_hXBvsT[0]->GetXaxis()->SetTitle("log(X_{B})");
-			m_hXBvsT[0]->GetYaxis()->SetTitle("|t| [(GeV/c)^{2}]");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(4);
-			m_hXBvsT[1]->Draw("colz");
-			m_hXBvsT[1]->GetXaxis()->SetTitle("log(X_{B})");
-			m_hXBvsT[1]->GetYaxis()->SetTitle("|t| [(GeV/c)^{2}]");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(5);
-			m_hQ2vsT[0]->Draw("colz");
-			m_hQ2vsT[0]->GetXaxis()->SetTitle("log(Q^{2} [(GeV/c)^{2}])");
-			m_hQ2vsT[0]->GetYaxis()->SetTitle("|t| [(GeV/c)^{2}]");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(6);
-			m_hQ2vsT[1]->Draw("colz");
-			m_hQ2vsT[1]->GetXaxis()->SetTitle("log(Q^{2} [(GeV/c)^{2}])");
-			m_hQ2vsT[1]->GetYaxis()->SetTitle("|t| [(GeV/c)^{2}]");
-			cans.back()->SetLogz();
-
-			cans.back()->cd(7);
-			m_hYvsT[0]->Draw("colz");
-			m_hYvsT[0]->GetXaxis()->SetTitle("y");
-			m_hYvsT[0]->GetYaxis()->SetTitle("|t| [(GeV/c)^{2}]");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(8);
-			m_hYvsT[1]->Draw("colz");
-			m_hYvsT[1]->GetXaxis()->SetTitle("y");
-			m_hYvsT[1]->GetYaxis()->SetTitle("|t| [(GeV/c)^{2}]");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(9);
-			m_hQ2vsY[0]->Draw("colz");
-			m_hQ2vsY[0]->GetXaxis()->SetTitle("log(Q^{2} [(GeV/c)^{2}])");
-			m_hQ2vsY[0]->GetYaxis()->SetTitle("y");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(10);
-			m_hQ2vsY[1]->Draw("colz");
-			m_hQ2vsY[1]->GetXaxis()->SetTitle("log(Q^{2} [(GeV/c)^{2}])");
-			m_hQ2vsY[1]->GetYaxis()->SetTitle("y");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(11);
-			m_hXBvsY[0]->Draw("colz");
-			m_hXBvsY[0]->GetXaxis()->SetTitle("log(X_{B})");
-			m_hXBvsY[0]->GetYaxis()->SetTitle("y");
-			cans.back()->SetLogz();
-			
-			cans.back()->cd(12);
-			m_hXBvsY[1]->Draw("colz");
-			m_hXBvsY[1]->GetXaxis()->SetTitle("log(X_{B})");
-			m_hXBvsY[1]->GetYaxis()->SetTitle("y");
-			cans.back()->SetLogz();
-
-		} 
-
-		if (i == 3){
 
 			cans.back()->Divide(4,3);
 
@@ -556,7 +507,7 @@ void AnalysisGeneral::plot(const std::string& path){
 			}
 		} 
 
-		if (i == 4){
+		if (i == 3){
 
 			cans.back()->Divide(4,3);
 
@@ -641,7 +592,7 @@ void AnalysisGeneral::plot(const std::string& path){
 			}
 		} 
 
-		if (i == 5){
+		if (i == 4){
 
 			cans.back()->Divide(4,3);
 

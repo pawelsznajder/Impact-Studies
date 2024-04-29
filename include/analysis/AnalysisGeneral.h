@@ -37,7 +37,7 @@ private:
 	TH2* evaluateAcceptance(TH2** h, bool isAcceptance) const;
 
 	//luminosity corresponding to accumulated luminosity
-	double m_lumi;
+	double m_lumiM, m_lumiP;
 
 	//reconstruction probabilities
 	double m_resProbPOut[3];

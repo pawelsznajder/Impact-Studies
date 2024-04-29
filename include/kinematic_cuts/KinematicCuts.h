@@ -8,7 +8,7 @@ namespace KinematicCuts{
 /*
  * Check kinematic cuts.
  */
-bool checkKinematicCuts(const DVCSEvent& event, KinematicsType::Type kinematicsType);
+bool checkKinematicCuts(const DVCSEvent& event, KinematicsType::Type kinematicsType, int skip = -1);
 
 }
 
