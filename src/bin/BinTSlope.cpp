@@ -4,34 +4,31 @@
 #include <sstream>
 
 #include "../../include/other/HashManager.h"
+#include "../../include/kinematic_cuts/KinematicCuts.h"
 
 BinTSlope::BinTSlope(
 	const std::pair<double, double>& rangeXB, 
 	const std::pair<double, double>& rangeQ2, 
 	size_t nTBins,
 	const std::pair<double, double>& rangeT
-) : Bin("BinTSlope", rangeXB, rangeQ2, rangeT, std::make_pair(0., 2 * M_PI)), m_lumiALL(0.), m_lumiBH(0.) {
+) : Bin("BinTSlope", rangeXB, rangeQ2, rangeT, std::make_pair(0., 2 * M_PI)) {
 
 	//reset
 	reset();
  
 	//make histograms
- 	for(size_t i = 0; i < 6; i++){
+ 	for(size_t i = 0; i < 3; i++){
 
  		//labels
 		std::stringstream ss;
 
-		if(i == 0) ss << "ALL rec lumi: ";
-		if(i == 1) ss << "BH true: ";
-		if(i == 2) ss << "ALL true: ";
-		if(i == 3) ss << "ALL rec: ";
-
-		if(i == 4) ss << "BH born: ";
-		if(i == 5) ss << "ALL born: ";
+		if(i == 0) ss << "DVCS rec lumi: ";
+		if(i == 1) ss << "DVCS true: ";
+		if(i == 2) ss << "DVCS rec: ";
 
 		ss << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
 			m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
-		
+
 		//make histograms
 		m_hDistributions.push_back(new TH1D((HashManager::getInstance()->getHash()).c_str(), ss.str().c_str(), 
 						nTBins, rangeT.first, rangeT.second));
@@ -60,52 +57,41 @@ void BinTSlope::reset(){
 	m_hDistributions.clear();
 	m_hTSlope = nullptr;
 	m_hTAcceptance = nullptr;
-	m_hTRC = nullptr;
 }
 
 void BinTSlope::fill(DVCSEvent& event, double weight){
 
-	//if BH+INT+DVCS
-	if( event.checkSubProcessType(SubProcessType::BH) && 
-		event.checkSubProcessType(SubProcessType::INT) && 
-		event.checkSubProcessType(SubProcessType::DVCS)
-	){
+	for(size_t i = 0; i < 2; i++){
 
-		if(weight > 0.){
+		KinematicsType::Type kinType = ((i == 0)?(KinematicsType::True):(KinematicsType::Observed));
 
-			//kinematics
-			Bin::fill(event);
+		if(KinematicCuts::checkKinematicCuts(event, kinType)){
 
-			//fill
-			if(event.isReconstructed()) m_hDistributions.at(0)->Fill(-1 * event.getT());
+			if(event.getXB(kinType) < getRangeXB().first || 
+				event.getXB(kinType) >= getRangeXB().second) continue; 
+
+			if(event.getQ2(kinType) < getRangeQ2().first || 
+				event.getQ2(kinType) >= getRangeQ2().second) continue; 
+
+			if(i == 0){
+				m_hDistributions.at(1)->Fill(-1 * event.getT(kinType));
+			}
+
+			if(i == 1){
+				if(weight > 0.){
+
+					Bin::fill(event);
+
+					m_hDistributions.at(0)->Fill(-1 * event.getT(kinType));
+				}else{
+					m_hDistributions.at(2)->Fill(-1 * event.getT(kinType));
+				}
+			}
 		}
-
-		m_hDistributions.at(2)->Fill(-1 * event.getT(KinematicsType::True));
-		if(event.isReconstructed()) m_hDistributions.at(3)->Fill(-1 * event.getT());
-		m_hDistributions.at(5)->Fill(-1 * event.getT(KinematicsType::Born));
-
-		m_lumiALL += fabs(weight);
-	}
-	
-	//if BH
-	if( event.checkSubProcessType(SubProcessType::BH) && 
-		(! event.checkSubProcessType(SubProcessType::INT)) && 
-		(! event.checkSubProcessType(SubProcessType::DVCS))
-	){
-
-		m_hDistributions.at(1)->Fill(-1 * event.getT(KinematicsType::True));
-		m_hDistributions.at(4)->Fill(-1 * event.getT(KinematicsType::Born));
-		m_lumiBH += weight;
 	}
 }
 
 void BinTSlope::analyse(){
-
-	std::cout << "error: " << __func__ << ": do not use this function" << std::endl;
-	exit(0);
-}
-
-void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
 	
 	//run for parent class
 	Bin::analyse();
@@ -113,6 +99,10 @@ void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
 	//skip bins with low entry count
 	if(getNEvents(KinematicsType::Observed) < 2000){
 		return;
+	}
+
+	for(size_t i = 0; i < 3; i++){
+		std::cout << "histogram size: " << i << ": " << m_hDistributions.at(i)->GetEntries() << std::endl;
 	}
 
 	//labels
@@ -127,47 +117,17 @@ void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
 	m_hTSlope->SetTitle(ss.str().c_str());
 
 	//calculate acceptance
-	m_hTAcceptance = static_cast<TH1*>(m_hDistributions.at(3)->Clone());
+	m_hTAcceptance = static_cast<TH1*>(m_hDistributions.at(2)->Clone());
 
 	ss.clear();
 	ss << "ALL acceptance " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
 			m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
 	m_hTAcceptance->SetTitle(ss.str().c_str());
 
-	m_hTAcceptance->Divide(m_hDistributions.at(2));
+	m_hTAcceptance->Divide(m_hDistributions.at(1));
 
 	//apply acceptance
 	m_hTSlope->Divide(m_hTAcceptance);
-
-	//get cumulative cross-sections
-	double ALLCS = m_hTSlope->Integral() / totalLumiALL;
-	double BHCS = m_hDistributions.at(1)->Integral() / totalLumiBH;
-
-	//subtract BH
-	m_hTSlope->Scale(1. / totalLumiALL);
-	m_hTSlope->Add(m_hDistributions.at(1), -1 / totalLumiBH);
-
-	std::cout << "debug: " << __func__ << ":" <<
-		" BH: event fraction/total_lumi: " << m_lumiBH/totalLumiBH << "/" << totalLumiBH << 
-		" ALL: event fraction/total_lumi: " << m_lumiALL/totalLumiALL << "/" << totalLumiALL << 
-		" BH fraction: " << BHCS/ALLCS << std::endl;
-
-	//radiative correction
-	m_hTRC = static_cast<TH1*>(m_hDistributions.at(2)->Clone());
-
-	ss.clear();
-	ss << "DVCS RC " << m_rangeXB.first << " #leq xB < " << m_rangeXB.second << " " <<
-			m_rangeQ2.first << " #leq Q2 < " << m_rangeQ2.second;
-	m_hTRC->SetTitle(ss.str().c_str());
-
-	m_hTRC->Scale(1. / totalLumiALL); //TODO DIFFERENT LUMIS FOR TRUE AND BORN?
-	m_hTRC->Add(m_hDistributions.at(1), -1 / totalLumiBH);
-
-	TH1* tmpH = static_cast<TH1*>(m_hDistributions.at(5)->Clone());
-	tmpH->Scale(1. / totalLumiALL); //TODO DIFFERENT LUMIS FOR TRUE AND BORN?
-	tmpH->Add(m_hDistributions.at(4), -1 / totalLumiBH);
-
-	m_hTRC->Divide(tmpH);
 
 	//fit
 	//fit options: 
@@ -194,7 +154,7 @@ void BinTSlope::analyse(double totalLumiALL, double totalLumiBH){
 	}
 
 	//print
-	// std::cout << "NUCLEON_TOMOGRAPHY{" << getMeanXB() << ", " << getMeanQ2() << ", " << m_hTSlope->GetNbinsX() << ", " << m_hTSlope->GetXaxis()->GetXmin() << ", " << m_hTSlope->GetXaxis()->GetXmax();
+	std::cout << "NUCLEON_TOMOGRAPHY{" << getMeanXB() << ", " << getMeanQ2() << ", " << m_hTSlope->GetNbinsX() << ", " << m_hTSlope->GetXaxis()->GetXmin() << ", " << m_hTSlope->GetXaxis()->GetXmax();
 	for(size_t i = 1; i <= m_hTSlope->GetNbinsX(); i++){
 		std::cout << ", " << m_hTSlope->GetBinContent(i) << ", " << m_hTSlope->GetBinError(i);
 	}
@@ -225,8 +185,4 @@ TH1* BinTSlope::getHTSlope() const{
 
 TH1* BinTSlope::getHTAcceptance() const{
 	return m_hTAcceptance;
-}
-
-TH1* BinTSlope::getHTRC() const{
-	return m_hTRC;
 }

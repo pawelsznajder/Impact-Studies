@@ -12,7 +12,7 @@
 #include "../../include/kinematic_cuts/KinematicCuts.h"
 
 AnalysisTSlope::AnalysisTSlope(double targetLuminosity) : Analysis("AnalysisTSlope", targetLuminosity),
-	m_lumiALL(0.), m_lumiBH(0.){
+	m_lumiM(0.), m_lumiP(0.){
 
 	//set bin boundaries
 	setBinBoundaries();
@@ -27,51 +27,58 @@ AnalysisTSlope::~AnalysisTSlope(){
 void AnalysisTSlope::fill(DVCSEvent& event, double weight){
 
 	//only comming from DVCS+INT+BH or BH sample
-	if(! ((
-		event.checkSubProcessType(SubProcessType::BH) && 
-		event.checkSubProcessType(SubProcessType::INT) && 
-		event.checkSubProcessType(SubProcessType::DVCS)
-		) || (
-		event.checkSubProcessType(SubProcessType::BH) && 
-		(! event.checkSubProcessType(SubProcessType::INT)) && 
-		(! event.checkSubProcessType(SubProcessType::DVCS))
-		))
-	) return;
+	if(! event.checkSubProcessType(SubProcessType::DVCS) ) return;
 
-	//check if target luminosity reached, if yes, make weight negative
-	if( event.checkSubProcessType(SubProcessType::BH) && 
-		event.checkSubProcessType(SubProcessType::INT) && 
-		event.checkSubProcessType(SubProcessType::DVCS)
-	){
-		m_lumiALL += weight;
+	//beam polarisation
+	switch(event.getBeamPolarisation()){
 
-		if(m_lumiALL >= m_targetLuminosity){
-			weight *= -1;
-		}
-	}
+   	 	case -1:{
 
-	//check if target luminosity reached, if yes, make weight negative
-	if( event.checkSubProcessType(SubProcessType::BH) && 
-		(! event.checkSubProcessType(SubProcessType::INT)) && 
-		(! event.checkSubProcessType(SubProcessType::DVCS))
-	){
-		m_lumiBH += weight;
+   	 		if(m_lumiM >= m_targetLuminosity/2.){
+   	 			weight *= -1;
+   	 		}else{
+   	 			m_lumiM += weight;
+   	 		}
+
+   	 		break;
+   	 	}
+
+       	case 1:{
+
+   	 		if(m_lumiP >= m_targetLuminosity/2.){
+   	 			weight *= -1;
+   	 		}else{
+   	 			m_lumiP += weight;
+   	 		}
+
+       	 	break;
+       	}
+
+       default:{
+       		std::cout << __func__ << " error: wrong beam polarisation state, " << event.getBeamPolarisation() << std::endl;
+			exit(0);
+       }
 	}
 
 	//cuts (must be implemented after counting the lumi)
-	if(! KinematicCuts::checkKinematicCuts(event, KinematicsType::Observed)) return;
+	for(size_t i = 0; i < 2; i++){
 
-	//fill
-	for(std::vector<BinTSlope>::iterator it = m_bins.begin(); 
-		it != m_bins.end(); it++){
+		KinematicsType::Type kinType = ((i == 0)?(KinematicsType::True):(KinematicsType::Observed));
 
-		if(event.getXB() < it->getRangeXB().first || 
-			event.getXB() >= it->getRangeXB().second) continue; 
+		if(KinematicCuts::checkKinematicCuts(event, kinType)){
 
-		if(event.getQ2() < it->getRangeQ2().first || 
-			event.getQ2() >= it->getRangeQ2().second) continue; 
+			for(std::vector<BinTSlope>::iterator it = m_bins.begin(); 
+				it != m_bins.end(); it++){
 
-		it->fill(event, weight);
+				if(event.getXB(kinType) < it->getRangeXB().first || 
+					event.getXB(kinType) >= it->getRangeXB().second) continue; 
+
+				if(event.getQ2(kinType) < it->getRangeQ2().first || 
+					event.getQ2(kinType) >= it->getRangeQ2().second) continue; 
+
+				it->fill(event, weight);
+			}
+		}
 	}
 }
 
@@ -88,7 +95,7 @@ void AnalysisTSlope::analyse(){
 		it->print();
 
 		//make analysis
-		it->analyse(m_lumiALL, m_lumiBH);
+		it->analyse();
 
 		//get results
 		FitResult* fitResult = it->getFitResult();
@@ -116,7 +123,7 @@ void AnalysisTSlope::plot(const std::string& path){
 	//===============================================
 
 	//loop over canvases for plotting xB vs. Q2 grid
-	for(size_t i = 0; i < 5; i++){
+	for(size_t i = 0; i < 4; i++){
 
 		//new
 		cans.push_back(new TCanvas(
@@ -211,23 +218,7 @@ void AnalysisTSlope::plot(const std::string& path){
 					 }
 				}
 
-				if(i == 3){
-
-					//histogram
-				  	TH1* h = itBin->getHTRC();
-
-					 //check if not empty
-					 if(h != nullptr){
-
-						 //no stats
-						 h->SetStats(0);
-
-						 //draw
-						 h->Draw();
-					 }
-				 }
-
-				 if(i == 4){
+				 if(i == 3){
 
 					//histogram
 				  	TH1* h = itBin->getHTSlope();
@@ -454,7 +445,7 @@ void AnalysisTSlope::setBinBoundaries(){
     	1000.0
     };
 
-    m_nBinsT = 20;
+    m_nBinsT = 60;
 }
 
 void AnalysisTSlope::initialiseBins(){
@@ -475,12 +466,18 @@ void AnalysisTSlope::initialiseBins(){
 			itXB != m_binRangesXB.end(); itXB++){
 		for(std::vector<std::pair<double, double> >::const_iterator itQ2 = m_binRangesQ2.begin();
 			itQ2 != m_binRangesQ2.end(); itQ2++){			
-			
-				m_bins.push_back(
-					BinTSlope(
-						*itXB, *itQ2, m_nBinsT, std::make_pair(0., 1.)
-					)
-				);
+
+            //t0
+	        double m = 0.9382720813;
+	        double xBMax = itXB->second;
+   	      	double Q2Max = itQ2->second;
+	        double t0 = pow(m, 2) * pow(xBMax, 2) / (1 - xBMax + xBMax * pow(m, 2)/Q2Max);
+		
+			m_bins.push_back(
+				BinTSlope(
+					*itXB, *itQ2, m_nBinsT, std::make_pair(((t0 > 0.05)?(t0):(0.05)), 1.2)
+				)
+			);
 		}
 	}
 }
