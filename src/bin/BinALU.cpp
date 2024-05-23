@@ -132,6 +132,9 @@ void BinALU::fill(DVCSEvent& event, double weight){
 }
 
 void BinALU::analyse(){
+
+	//polarisation
+	const double c_polarisation = 0.8;
 	
 	//run for parent class
 	Bin::analyse();
@@ -172,13 +175,23 @@ void BinALU::analyse(){
 	m_hDif = static_cast<TH1*>(m_hDistributionsCorrected.first->Clone());
 	m_hDif->Add(m_hDistributionsCorrected.second, -1.);
 
-	printHistogram(m_hSum, "ALUSUM");
-	printHistogram(m_hDif, "ALUDIF");
-
+	//include polarisation factor
+	for(int i = 1; i <= m_hDif->GetNbinsX(); i++){
+		m_hDif->SetBinError(i, m_hDif->GetBinError(i) / sqrt(c_polarisation));
+	}
+	
 	//make asymmetry histogram
 	m_hAsymmetry = 
 		m_hDistributions.first->GetAsymmetry(m_hDistributions.second);
 
+	//include polarisation factor
+	for(int i = 1; i <= m_hAsymmetry->GetNbinsX(); i++){
+		m_hAsymmetry->SetBinError(i, m_hAsymmetry->GetBinError(i) / sqrt(c_polarisation));
+	}
+
+	//print
+	printHistogram(m_hSum, "ALUSUM");
+	printHistogram(m_hDif, "ALUDIF");
 	printHistogram(m_hAsymmetry, "ALUASS");
 
 	//fit
